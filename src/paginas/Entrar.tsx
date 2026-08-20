@@ -93,7 +93,9 @@ export function Entrar() {
 
             {error && <Aviso nivel="urgente" titulo={error} />}
             {aviso && <Aviso nivel="hecho" titulo={aviso} />}
-            {!hayConexion && <Aviso nivel="importante" titulo="El servidor no está conectado en esta versión." />}
+            {!hayConexion && !error && (
+              <Aviso nivel="importante" titulo="El servidor no está conectado en esta versión." />
+            )}
 
             <Boton ancho tamano="grande" cargando={cargando} onClick={() => void enviar()}>
               {modo === 'entrar' ? 'Entrar' : 'Crear mi restaurante'}

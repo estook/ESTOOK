@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { BarChart3, CalendarClock, ChefHat, ClipboardCheck, MessageSquare, Star, Store } from 'lucide-react'
+import { BarChart3, CalendarClock, ClipboardCheck, MessageSquare, Star, Store } from 'lucide-react'
 import { Tarjeta } from '@/componentes/Tarjeta'
 import { Boton } from '@/componentes/Boton'
 import { Insignia } from '@/componentes/Estado'
@@ -34,21 +34,6 @@ function Proximamente({ partes }: { partes: [string, string][] }) {
         pantalla. Mientras tanto, <Link to="/app/despensa" className="font-semibold text-naranja-oscuro underline">Despensa</Link> ya funciona entera.
       </p>
     </Tarjeta>
-  )
-}
-
-export function Cocina() {
-  return (
-    <div className="flex flex-col gap-4">
-      <Cabecera icono={<ChefHat className="size-6 text-naranja" aria-hidden />} titulo="Cocina"
-        texto="Fichas técnicas, escandallos, carta y menú del día. El cocinero ve gramajes, pasos y fotos; los importes no existen para él." />
-      <Proximamente partes={[
-        ['Fichas técnicas', 'Dos caras: producto con coste y margen, y elaboración con pasos, fotos, tiempos y truco.'],
-        ['Elaboraciones', 'Bechamel, fondos y alioli con su coste y su stock propio.'],
-        ['Carta', 'Secciones arrastrables y el análisis que dice qué plato es estrella, caballo, puzzle o perro.'],
-        ['Menú del día', 'Propuesto cruzando lo que caduca, lo que hay y el margen objetivo.'],
-      ]} />
-    </div>
   )
 }
 

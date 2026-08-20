@@ -7,7 +7,7 @@ import { Campo, Selector } from '@/componentes/Campo'
 import { Hoja } from '@/componentes/Hoja'
 import { Tabla, type Columna } from '@/componentes/Tabla'
 import { Aviso, Insignia, Vacio } from '@/componentes/Estado'
-import { hayConexion } from '@/datos/supabase'
+import { hayConexion, origenConfiguracion } from '@/datos/supabase'
 import { encolar, type Apunte } from '@/offline/cola'
 import { useCola } from '@/offline/useCola'
 
@@ -95,7 +95,7 @@ export function Cimientos() {
           origen="Red del dispositivo"
           tendencia={conRed ? 'sube' : 'baja'}
         />
-        <Cifra etiqueta="Servidor" valor={hayConexion ? 'Listo' : 'Pendiente'} origen="Claves de /config/.env.local" />
+        <Cifra etiqueta="Servidor" valor={hayConexion ? 'Listo' : 'Pendiente'} origen={`Configuración: ${origenConfiguracion}`} />
         <Cifra etiqueta="Toque mínimo" valor="44 px" origen="Mínimo en toda la app" />
       </section>
 

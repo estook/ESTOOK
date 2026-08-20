@@ -6,7 +6,8 @@ import { Entrar } from '@/paginas/Entrar'
 import { Cimientos } from '@/paginas/Cimientos'
 import { PanelInicio } from '@/paginas/apps/PanelInicio'
 import { Despensa } from '@/paginas/apps/Despensa'
-import { Ajustes, Chat, Cocina, Competencia, Equipo, Negocio, Resenas, Servicio } from '@/paginas/apps/Otras'
+import { Ajustes, Chat, Competencia, Equipo, Negocio, Resenas, Servicio } from '@/paginas/apps/Otras'
+import { Cocina } from '@/paginas/apps/Cocina'
 
 export function App() {
   return (
