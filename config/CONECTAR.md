@@ -198,11 +198,11 @@ del JavaScript de todas formas):
 |---|---|
 | `VITE_SUPABASE_URL` | `https://dqdmutauhgowqknwpwcm.supabase.co` |
 | `VITE_SUPABASE_ANON_KEY` | `TU_PUBLISHABLE_KEY` |
-| `VITE_APP_URL` | `https://estook.com` |
-| `VITE_BASE` | `/` con dominio propio · `/estook/` si usas la URL de github.io |
+| `VITE_APP_URL` | La dirección donde quede la app |
 
-Esa última es la única trampa de Pages: sin dominio propio la app cuelga de
-`usuario.github.io/estook/`, y si `VITE_BASE` no lo dice, se queda en blanco.
+**`VITE_BASE` ya no existe.** La app usa rutas relativas y enrutado por almohadilla
+(`/#/panel`), así que funciona igual colgando de `usuario.github.io/LO_QUE_SEA/` que en la
+raíz de un dominio propio, sin acertar con ninguna variable.
 
 ### 3.4 Dominio propio
 
@@ -217,7 +217,7 @@ de dominio:
 | A | @ | 185.199.111.153 |
 | CNAME | www | TU_USUARIO.github.io |
 
-Con dominio propio, `VITE_BASE` vuelve a `/`.
+Con dominio propio no hay que cambiar nada en el proyecto: las rutas ya son relativas.
 
 ### 3.5 Lo que Pages no puede hacer
 
@@ -226,8 +226,18 @@ Nada de esto nos afecta hoy, pero conviene saberlo:
 - No ejecuta código de servidor. Por eso Fogón, Google, los PDF, el TPV y los webhooks de
   Stripe van en funciones de Supabase. Si algún día una de ellas necesitara algo que Supabase
   no dé, se mueve solo esa pieza.
-- No hay redirecciones de servidor: la app usa el truco del `404.html`, que ya se genera solo
-  al compilar.
+- No hay redirecciones de servidor. Por eso las rutas van con almohadilla
+  (`/#/panel`): así ningún enlace directo da 404. Además se genera un `404.html` de respaldo.
+
+### Si la pantalla sale en blanco
+
+1. Mira **Actions**: si el último despliegue está en rojo, el fallo está ahí.
+2. Abre la página en el ordenador, botón derecho › ver código fuente. Los archivos tienen que
+   pedirse como `./assets/…`. Si aparece una ruta absoluta que no corresponde, hay una
+   variable `VITE_BASE` vieja puesta en el repositorio: bórrala y vuelve a desplegar.
+3. En el móvil, cierra la pestaña y vuelve a abrir: el service worker guarda la versión
+   anterior. En el ordenador, recarga forzada (Ctrl+F5).
+4. Si sigue en blanco, la app ahora enseña el error en pantalla en vez de quedarse muda.
 
 ---
 

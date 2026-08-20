@@ -67,6 +67,7 @@ create table if not exists cuentas (
   prueba_termina_en timestamptz default (now() + interval '14 days'),
   stripe_cliente_id text,
   stripe_suscripcion_id text,
+  metodo_pago_puesto boolean not null default false,    -- la prueba solo arranca con tarjeta
   estado_pago text not null default 'al_dia',           -- al_dia | fallido | solo_lectura | archivada
   creado_en timestamptz not null default now(),
   actualizado_en timestamptz not null default now()

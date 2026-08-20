@@ -13,3 +13,7 @@ create index if not exists idx_consumo_ia_rafaga
 
 create index if not exists idx_consumo_externo_dia
   on consumo_externo(cuenta_id, servicio, creado_en desc);
+
+-- La prueba de 14 días arranca con tarjeta ya puesta (Stripe en estado trialing).
+alter table cuentas
+  add column if not exists metodo_pago_puesto boolean not null default false;
