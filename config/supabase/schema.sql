@@ -607,6 +607,7 @@ create table if not exists consumo_ia (
   id uuid primary key default gen_random_uuid(),
   cuenta_id uuid not null references cuentas(id) on delete cascade,
   local_id uuid references locales(id) on delete set null,
+  persona_ref uuid references miembros(id) on delete set null,   -- para el freno de ráfaga
   tarea text not null,
   modelo text,
   tokens_entrada int default 0,
