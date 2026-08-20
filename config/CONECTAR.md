@@ -26,7 +26,10 @@ esperando a que cada uno diga *Success*:
 | 1 | `config/supabase/schema.sql` | 9 tipos, 55 tablas, índices, la función de coste por unidad de uso y los sellos de tiempo |
 | 2 | `config/supabase/policies.sql` | Las reglas de acceso: quién ve qué, rol por rol, y las vistas sin costes |
 | 3 | `config/supabase/storage.sql` | Los tres cubos de ficheros y sus permisos |
-| 4 | `config/supabase/seed.sql` | *Opcional.* Un local de pruebas con cuatro productos. En producción, no |
+| 4 | `config/supabase/alta.sql` | El alta automática: al registrarse, se le crea cuenta, local y rol de gerente |
+| 5 | `config/supabase/parche-01.sql` | Columnas nuevas (freno de ráfaga y método de pago) |
+| 6 | `config/supabase/admin.sql` | Deja tu correo como gerente con el plan más alto. **Antes hay que crear la cuenta desde la web** |
+| 7 | `config/supabase/seed.sql` | *Opcional.* Un local de pruebas con cuatro productos. En producción, no |
 
 **Comprobación:** en **Table Editor** tienen que aparecer `cuentas`, `locales`, `productos`,
 `platos`, `documentos`… y en **Database › Roles/Policies** cada tabla con el candado de RLS
