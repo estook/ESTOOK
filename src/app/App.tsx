@@ -1,9 +1,12 @@
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { ProveedorSesion } from '@/app/sesion'
+import { Marco } from '@/app/Marco'
 import { Landing } from '@/paginas/Landing'
 import { Entrar } from '@/paginas/Entrar'
-import { Panel } from '@/paginas/Panel'
 import { Cimientos } from '@/paginas/Cimientos'
+import { PanelInicio } from '@/paginas/apps/PanelInicio'
+import { Despensa } from '@/paginas/apps/Despensa'
+import { Ajustes, Chat, Cocina, Competencia, Equipo, Negocio, Resenas, Servicio } from '@/paginas/apps/Otras'
 
 export function App() {
   return (
@@ -12,7 +15,18 @@ export function App() {
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/entrar" element={<Entrar />} />
-          <Route path="/app" element={<Panel />} />
+          <Route path="/app" element={<Marco />}>
+            <Route index element={<PanelInicio />} />
+            <Route path="despensa" element={<Despensa />} />
+            <Route path="cocina" element={<Cocina />} />
+            <Route path="servicio" element={<Servicio />} />
+            <Route path="equipo" element={<Equipo />} />
+            <Route path="negocio" element={<Negocio />} />
+            <Route path="competencia" element={<Competencia />} />
+            <Route path="resenas" element={<Resenas />} />
+            <Route path="chat" element={<Chat />} />
+            <Route path="ajustes" element={<Ajustes />} />
+          </Route>
           <Route path="/diagnostico" element={<Cimientos />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
