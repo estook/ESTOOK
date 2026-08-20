@@ -1,0 +1,67 @@
+@import '@fontsource-variable/sora';
+@import '@fontsource/montserrat/400.css';
+@import '@fontsource/montserrat/500.css';
+@import '@fontsource/montserrat/600.css';
+@import '@fontsource/montserrat/700.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* El color secundario del local se inyecta aquí en tiempo de ejecución. */
+    --color-local: #ff7a00;
+    color-scheme: light; /* El modo oscuro del móvil no repinta la app. */
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-panel font-texto text-tinta antialiased;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+  }
+
+  h1,
+  h2,
+  h3,
+  .titular {
+    @apply font-titulo tracking-tight;
+  }
+
+  /* Las cifras nunca bailan al actualizarse. */
+  .cifras {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum';
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-naranja ring-offset-2 ring-offset-lienzo;
+  }
+}
+
+@layer components {
+  /* Área de toque mínima de 44 px sin engordar el diseño. */
+  .toque::after {
+    content: '';
+    position: absolute;
+    inset: 50% 0 0 0;
+    transform: translateY(-50%);
+    height: max(100%, 44px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,7 @@
+project_id = "dqdmutauhgowqknwpwcm"
+
+[functions.fogon]
+verify_jwt = true
+
+[functions.lugares]
+verify_jwt = true
