@@ -24,15 +24,25 @@ export function Logotipo({ conClaim = true, className = '' }: { conClaim?: boole
   )
 }
 
-/** La cara de Fogón, el asistente. */
-export function CaraFogon({ className = 'size-8' }: { className?: string }) {
-  return (
+/**
+ * La cara de Fogón. Va siempre sobre su círculo charcoal: el robot es blanco y
+ * sobre fondo claro desaparecería. Con `suelto` se pinta sin círculo, para
+ * cuando ya está encima de un fondo oscuro.
+ */
+export function CaraFogon({ className = 'size-8', suelto = false }: { className?: string; suelto?: boolean }) {
+  const cara = (
     <img
       src={`${RUTA}marca/fogon.png`}
       alt="Fogón"
-      className={`${className} rounded-full object-cover`}
+      className="size-full object-contain"
       width={512}
       height={512}
     />
+  )
+  if (suelto) return <span className={`${className} inline-block`}>{cara}</span>
+  return (
+    <span className={`${className} inline-grid shrink-0 place-items-center overflow-hidden rounded-full bg-tinta p-[12%]`}>
+      {cara}
+    </span>
   )
 }

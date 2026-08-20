@@ -14,6 +14,14 @@
 -- Se puede ejecutar las veces que haga falta: no duplica nada.
 -- ============================================================
 
+-- Antes de nada: columnas que puede que falten si el esquema se aplicó
+-- antes de los últimos cambios. Es inofensivo si ya están.
+alter table cuentas    add column if not exists metodo_pago_puesto boolean not null default false;
+alter table consumo_ia add column if not exists persona_ref uuid references miembros(id) on delete set null;
+alter table pedidos    add column if not exists fecha_entrega date;
+alter table pedidos    add column if not exists hora_entrega  time;
+alter table pedidos    add column if not exists notas text;
+
 do $$
 declare
   v_correo  text := 'belicar1905@gmail.com';   -- ← cambia esto si usas otro correo

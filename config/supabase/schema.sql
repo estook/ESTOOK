@@ -252,6 +252,9 @@ create table if not exists pedidos (
   recibido_en timestamptz,
   numero_albaran text,
   incidencia text,
+  fecha_entrega date,                                    -- cuándo lo quiere el local
+  hora_entrega time,
+  notas text,                                            -- lo que se le dice al proveedor
   creado_por uuid references personas(id),
   creado_en timestamptz not null default now(),
   actualizado_en timestamptz not null default now()

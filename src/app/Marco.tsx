@@ -69,7 +69,7 @@ export function Marco() {
               onClick={() => setFogon(true)}
               className="hidden h-9 items-center gap-2 rounded-md bg-tinta px-3 text-sm font-semibold text-white md:flex"
             >
-              <CaraFogon className="size-5" /> Fogón
+              <CaraFogon className="size-5" suelto /> Fogón
             </button>
             <button onClick={() => void salir()} aria-label="Salir"
               className="grid size-9 place-items-center rounded-md text-tinta-suave hover:bg-panel">
@@ -110,7 +110,7 @@ export function Marco() {
         aria-label="Preguntar a Fogón"
         className="fixed bottom-24 right-4 z-40 grid size-12 place-items-center rounded-full bg-tinta text-white shadow-tarjeta lg:hidden"
       >
-        <CaraFogon className="size-8" />
+        <CaraFogon className="size-7" suelto />
       </button>
 
       <Rueda abierta={rueda} apps={APPS} onCerrar={() => setRueda(false)} />

@@ -17,3 +17,8 @@ create index if not exists idx_consumo_externo_dia
 -- La prueba de 14 días arranca con tarjeta ya puesta (Stripe en estado trialing).
 alter table cuentas
   add column if not exists metodo_pago_puesto boolean not null default false;
+
+-- Pedidos: cuándo lo quieres y qué le dices al proveedor.
+alter table pedidos add column if not exists fecha_entrega date;
+alter table pedidos add column if not exists hora_entrega  time;
+alter table pedidos add column if not exists notas text;
