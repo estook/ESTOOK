@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { Logotipo } from '@/marca/Logo'
@@ -18,6 +18,39 @@ export function Entrar() {
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [aviso, setAviso] = useState<string | null>(null)
+  const [reenviable, setReenviable] = useState(false)
+
+  /**
+   * Cuando el enlace del correo caduca o ya se ha usado, Supabase devuelve al
+   * usuario con el error en la dirección. Sin esto, la app se abre como si nada
+   * y el usuario se queda sin saber qué ha pasado.
+   */
+  useEffect(() => {
+    const bruto = window.location.hash
+    if (!bruto.includes('error')) return
+    const parametros = new URLSearchParams(bruto.slice(bruto.indexOf('error') - 1).replace(/^[?#]/, ''))
+    const codigo = parametros.get('error_code')
+    setError(
+      codigo === 'otp_expired'
+        ? 'El enlace del correo ha caducado. Pídelo otra vez y ábrelo antes de una hora.'
+        : 'Ese enlace ya no vale. Vuelve a intentarlo desde aquí.',
+    )
+    setReenviable(true)
+    window.history.replaceState(null, '', window.location.pathname + '#/entrar')
+  }, [])
+
+  const destinoDelCorreo = `${window.location.origin}${import.meta.env.BASE_URL}#/entrar`
+
+  async function reenviar() {
+    if (!supabase || !correo.trim()) { setError('Escribe tu correo y vuelve a darle.'); return }
+    setCargando(true)
+    const { error } = await supabase.auth.resend({
+      type: 'signup', email: correo.trim(), options: { emailRedirectTo: destinoDelCorreo },
+    })
+    setCargando(false)
+    if (error) setError('No se ha podido reenviar. Prueba dentro de un minuto.')
+    else { setError(null); setAviso('Te lo hemos vuelto a mandar. Míralo también en la carpeta de spam.') }
+  }
 
   async function enviar() {
     setError(null); setAviso(null)
@@ -34,11 +67,17 @@ export function Entrar() {
         const { data, error } = await supabase.auth.signUp({
           email: correo.trim(),
           password: clave,
-          options: { data: { nombre: nombre.trim(), local: local.trim() } },
+          options: {
+            data: { nombre: nombre.trim(), local: local.trim() },
+            emailRedirectTo: destinoDelCorreo,
+          },
         })
         if (error) throw error
         if (data.session) navegar('/app')
-        else setAviso('Te hemos mandado un correo para confirmar la cuenta. Ábrelo y entra desde ahí.')
+        else {
+          setReenviable(true)
+          setAviso('Te hemos mandado un correo para confirmar la cuenta. Ábrelo desde este mismo dispositivo; el enlace vale una hora.')
+        }
       }
     } catch (e) {
       const m = e instanceof Error ? e.message : ''
@@ -95,6 +134,11 @@ export function Entrar() {
             {aviso && <Aviso nivel="hecho" titulo={aviso} />}
             {!hayConexion && !error && (
               <Aviso nivel="importante" titulo="El servidor no está conectado en esta versión." />
+            )}
+            {reenviable && (
+              <Boton tono="discreto" ancho onClick={() => void reenviar()} cargando={cargando}>
+                Volver a enviarme el correo
+              </Boton>
             )}
 
             <Boton ancho tamano="grande" cargando={cargando} onClick={() => void enviar()}>

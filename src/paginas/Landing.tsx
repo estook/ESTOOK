@@ -7,6 +7,7 @@ import {
 import { Isotipo, Logotipo } from '@/marca/Logo'
 import { Boton } from '@/componentes/Boton'
 import { PANTALLAS } from '@/paginas/Mockups'
+import { MenuMovil } from '@/paginas/MenuMovil'
 
 /** Aparece al entrar en pantalla. Si el sistema pide menos animación, no hace nada. */
 function Aparece({ children, className = '' }: { children: ReactNode; className?: string }) {
@@ -31,14 +32,14 @@ function Aparece({ children, className = '' }: { children: ReactNode; className?
 }
 
 const apps = [
-  { icono: Boxes, nombre: 'Despensa', texto: 'Lo que hay en cámara y lo que cuesta de verdad. Entra el albarán y los escandallos se recalculan solos.' },
-  { icono: ChefHat, nombre: 'Cocina', texto: 'Fichas técnicas con gramajes y fotos, escandallos, carta y menú del día.' },
-  { icono: ClipboardCheck, nombre: 'Servicio', texto: 'Jornada, ventas, APPCC firmado con PIN y cierre de caja en sesenta segundos.' },
-  { icono: CalendarClock, nombre: 'Equipo', texto: 'Cuadrante con turnos partidos, fichaje con un botón y el horario de cada uno en su móvil.' },
-  { icono: BarChart3, nombre: 'Negocio', texto: 'Prime cost, desviación de género y dónde se te escapa el margen, listo para la gestoría.' },
-  { icono: Store, nombre: 'Competencia', texto: 'Qué cobran los de tu calle, cómo están valorados y dónde estás tú.' },
-  { icono: Star, nombre: 'Reseñas', texto: 'Lo que dicen tus clientes, ordenado por tema, con la respuesta ya escrita.' },
-  { icono: MessageSquare, nombre: 'Chat', texto: 'La forma oficial de hablar del trabajo, con confirmación de lectura.' },
+  { icono: Boxes, nombre: 'Género y proveedores', texto: 'Qué hay en la cámara, a cuánto te lo vende cada proveedor y cuándo hay que pedir. Los albaranes entran haciéndoles una foto.' },
+  { icono: ChefHat, nombre: 'Recetas y carta', texto: 'Cada plato con sus gramajes, sus pasos y su coste real. Sabes al céntimo lo que ganas con cada uno y qué precio deberías poner.' },
+  { icono: ClipboardCheck, nombre: 'El día a día', texto: 'Cierre de caja en un minuto, control de temperaturas y registros sanitarios firmados. La carpeta para el inspector, siempre lista.' },
+  { icono: CalendarClock, nombre: 'Personal', texto: 'Cuadrante con turnos partidos, fichajes y horas. Al publicarlo, cada uno recibe el suyo en el móvil.' },
+  { icono: BarChart3, nombre: 'Números del negocio', texto: 'Cuánto te llevas de verdad cada mes, cuánto se va en género y en personal, y por dónde se escapa el dinero.' },
+  { icono: Store, nombre: 'Los de tu calle', texto: 'A cuánto tienen el menú los bares de tu zona, cómo están valorados y en qué lugar quedas tú.' },
+  { icono: Star, nombre: 'Opiniones', texto: 'Lo que dicen tus clientes, agrupado por temas, con la respuesta ya redactada para que solo la envíes.' },
+  { icono: MessageSquare, nombre: 'Equipo', texto: 'Los avisos del turno en un sitio, con constancia de quién los ha leído. Se acabó el «a mí nadie me dijo nada».' },
 ]
 
 const pasos = [
@@ -80,11 +81,18 @@ export function Landing() {
       <header className="sticky top-0 z-40 border-b border-borde bg-lienzo/90 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between px-4 md:px-8">
           <Logotipo conClaim={false} />
-          <nav className="hidden items-center gap-6 text-sm font-semibold text-tinta-suave md:flex">
-            <a href="#como-funciona" className="hover:text-tinta">Cómo funciona</a>
-            <a href="#por-dentro" className="hover:text-tinta">Por dentro</a>
-            <a href="#fogon" className="hover:text-tinta">Fogón</a>
-            <a href="#precios" className="hover:text-tinta">Precios</a>
+          <nav className="hidden items-center gap-7 text-sm font-semibold text-tinta-suave md:flex">
+            {[['#como-funciona', 'Cómo funciona'], ['#por-dentro', 'Por dentro'],
+              ['#fogon', 'Fogón'], ['#precios', 'Precios']].map(([ancla, texto]) => (
+              <a
+                key={ancla}
+                href={ancla}
+                className="group relative py-1 transition-colors hover:text-tinta"
+              >
+                {texto}
+                <span className="absolute inset-x-0 -bottom-0.5 h-0.5 origin-left scale-x-0 rounded-full bg-naranja transition-transform duration-300 ease-estook group-hover:scale-x-100" />
+              </a>
+            ))}
           </nav>
           <div className="flex items-center gap-2">
             <Link to="/entrar"><Boton tono="discreto" tamano="pequeno">Entrar</Boton></Link>
@@ -104,8 +112,9 @@ export function Landing() {
               Tu cocina, bajo control.
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/75">
-              Estook sabe lo que tienes en cámara, lo que te cuesta de verdad cada plato y por dónde
-              se te está escapando el margen. Y te avisa antes de que el mes se cierre en rojo.
+              Controla el género, calcula lo que te cuesta cada plato de verdad, monta la carta y
+              los turnos, y te avisa cuando algo se te está comiendo el margen. Todo desde el móvil,
+              sin hojas de cálculo y sin echar la tarde.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link to="/entrar?alta=1"><Boton tamano="grande">Empezar la prueba de 14 días <ArrowRight className="size-4" /></Boton></Link>
@@ -114,7 +123,7 @@ export function Landing() {
             <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-sm text-white/60">
               <span className="flex items-center gap-2"><Smartphone className="size-4 text-naranja" /> Se instala en el móvil</span>
               <span className="flex items-center gap-2"><WifiOff className="size-4 text-naranja" /> Funciona sin cobertura</span>
-              <span className="flex items-center gap-2"><FileText className="size-4 text-naranja" /> Documentos con tu logo</span>
+              <span className="flex items-center gap-2"><FileText className="size-4 text-naranja" /> Genera tus documentos solo</span>
             </div>
           </div>
         </section>
@@ -123,7 +132,7 @@ export function Landing() {
         <section className="border-b border-borde bg-panel">
           <div className="mx-auto max-w-[1200px] px-4 py-14 md:px-8">
             <Aparece>
-              <h2 className="font-titulo text-2xl font-semibold">Esto pasa en tu bar ahora mismo</h2>
+              <h2 className="font-titulo text-2xl font-semibold">Esto te está pasando ahora mismo</h2>
             </Aparece>
             <div className="mt-8 grid gap-8 md:grid-cols-3">
               {[
@@ -145,8 +154,8 @@ export function Landing() {
           <Aparece>
             <h2 className="font-titulo text-3xl font-semibold">Cómo funciona</h2>
             <p className="mt-3 max-w-2xl text-tinta-suave">
-              Tres pasos. El primero tarda tres minutos; los otros dos los hace la app sola mientras
-              trabajas.
+              El primer paso te lleva tres minutos. Los otros dos los hace la app sola mientras tú
+              estás en la barra.
             </p>
           </Aparece>
           <ol className="mt-10 grid gap-6 md:grid-cols-3">
@@ -206,10 +215,10 @@ export function Landing() {
         {/* 5 · Las apps */}
         <section className="mx-auto max-w-[1200px] px-4 py-16 md:px-8">
           <Aparece>
-            <h2 className="font-titulo text-3xl font-semibold">Ocho apps, los mismos datos</h2>
+            <h2 className="font-titulo text-3xl font-semibold">Todo lo necesario para tu cocina, en una sola app</h2>
             <p className="mt-3 max-w-2xl text-tinta-suave">
-              Cada una controla su parcela. Lo que pasa en una lo saben todas: entra un precio nuevo
-              y el margen de tus platos cambia solo, sin que toques nada.
+              Ocho partes que trabajan con la misma información, así que no hay que apuntar nada dos
+              veces. Sube el precio del pescado en un albarán y el margen de tus platos cambia solo.
             </p>
           </Aparece>
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -266,11 +275,12 @@ export function Landing() {
         {/* 7 · Documentos */}
         <section className="mx-auto max-w-[1200px] px-4 py-16 md:px-8">
           <Aparece>
-            <h2 className="font-titulo text-3xl font-semibold">Los papeles, hechos</h2>
+            <h2 className="font-titulo text-3xl font-semibold">Genera tus documentos solo, y con tu marca</h2>
             <p className="mt-3 max-w-2xl text-tinta-suave">
-              Se generan donde están los datos, con tu logo y tu color, y se mandan por WhatsApp o
-              correo desde el móvil. Cada uno queda guardado con su fecha: vuelves al de marzo y sale
-              idéntico aunque los precios hayan cambiado tres veces.
+              La carta, el menú del día, el horario de la semana o la carpeta del inspector salen
+              hechos y personalizados con el nombre, el logo y los colores de tu casa. Se mandan por
+              WhatsApp o correo desde el móvil, y quedan guardados con su fecha: puedes volver al de
+              marzo y sale igual aunque los precios hayan cambiado tres veces.
             </p>
           </Aparece>
           <div className="mt-8 flex flex-wrap gap-2">
@@ -361,7 +371,9 @@ export function Landing() {
         </section>
       </main>
 
-      <footer className="border-t border-borde bg-lienzo">
+      <MenuMovil />
+
+      <footer className="border-t border-borde bg-lienzo pb-24 md:pb-0">
         <div className="mx-auto flex max-w-[1200px] flex-col gap-4 px-4 py-8 text-sm text-tinta-tenue md:flex-row md:items-center md:justify-between md:px-8">
           <Logotipo />
           <p>Estook · gestión para bares y restaurantes · hecho para quien está de pie doce horas al día.</p>

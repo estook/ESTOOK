@@ -50,12 +50,17 @@ delete from cuentas where id = '11111111-1111-4111-8111-111111111111';
 - **Confirm email**: activado. La invitación ya lleva su enlace.
 - Teléfono, Google, Apple y demás: apagados. No los necesitamos y son superficie de ataque.
 
-**Authentication › URL Configuration**:
+**Authentication › URL Configuration** — esto es lo que hace que el enlace del correo
+funcione. Si aquí pone `localhost:3000`, el enlace lleva a una página muerta:
 
 | Campo | Valor |
 |---|---|
-| Site URL | `https://estook.com` (mientras tanto, la URL de GitHub Pages) |
-| Redirect URLs | `http://localhost:5173/**`, `https://estook.com/**` y la de Pages con `/**` |
+| Site URL | `https://estook.github.io/ESTOOK/` (y luego `https://estook.com`) |
+| Redirect URLs | `https://estook.github.io/ESTOOK/**`, `https://estook.com/**` y `http://localhost:5173/**` |
+
+**Correo de confirmación.** Mientras pruebas, lo más cómodo es apagarlo:
+**Authentication › Sign In / Providers › Email › Confirm email → apagado**. Así, al crear la
+cuenta se entra directo. Cuando esté Resend configurado (paso 1.6) se vuelve a encender.
 
 **Authentication › Sessions**: caducidad de sesión larga (una semana o más). Es una app de
 cocina: nadie quiere volver a entrar cada mañana con las manos mojadas.
@@ -104,7 +109,33 @@ supabase secrets set \
 
 **Comprobación:** `supabase secrets list` tiene que devolver esos seis nombres.
 
-### 1.6 Publicar las funciones
+### 1.6 Correo con Resend (para que los correos salgan a tu nombre)
+
+Supabase manda los correos de confirmación desde su servidor de pruebas: van lentos, caen en
+spam y tienen un tope de tres o cuatro al día. Con Resend salen desde tu dominio.
+
+1. En resend.com › **Domains**, añade `estook.com` y copia los registros SPF, DKIM y DMARC en
+   tu proveedor de dominio. Mientras el dominio no esté verificado, puedes usar el remitente de
+   pruebas de Resend, pero solo te llegarán a tu propio correo.
+2. En resend.com › **SMTP**, coge los datos de conexión.
+3. En Supabase: **Project Settings › Authentication › SMTP Settings › Enable Custom SMTP**:
+
+| Campo | Valor |
+|---|---|
+| Host | `smtp.resend.com` |
+| Puerto | `465` |
+| Usuario | `resend` |
+| Contraseña | tu clave de Resend (`re_…`) |
+| Sender email | `hola@estook.com` (o el remitente de pruebas mientras verificas el dominio) |
+| Sender name | `Estook` |
+
+4. **Authentication › Email Templates**: cambia los textos al castellano y quita la marca de
+   Supabase. El enlace del botón debe ser `{{ .ConfirmationURL }}`.
+
+La misma clave sirve luego para las invitaciones al equipo y para mandar los horarios en PDF,
+desde una función de servidor con el secreto `RESEND_API_KEY`.
+
+### 1.7 Publicar las funciones
 
 ```bash
 supabase functions deploy fogon
@@ -115,7 +146,7 @@ supabase functions deploy lugares
 sesión, tiene que responder 401: eso significa que la puerta está cerrada, que es lo que
 queremos.
 
-### 1.7 Copias de seguridad
+### 1.8 Copias de seguridad
 
 **Database › Backups**: copia diaria con 30 días de retención. En el plan gratuito hay 7 días;
 al pasar a Pro (unos 23 €/mes para toda la plataforma, 0,23 € por local con 100 locales) se
