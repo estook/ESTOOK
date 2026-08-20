@@ -1,28 +1,38 @@
-/** Isotipo de Estook: las tres barras y la flecha. La del medio, en naranja. */
+const RUTA = import.meta.env.BASE_URL
+
+/** El isotipo oficial: las barras con la naranja en medio y la flecha. */
 export function Isotipo({ className = 'size-8' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 64 64" className={className} role="img" aria-label="Estook">
-      <rect x="8" y="8" width="48" height="10" rx="3.5" fill="currentColor" />
-      <rect x="8" y="8" width="11" height="24" rx="3.5" fill="currentColor" />
-      <rect x="8" y="22" width="48" height="10" rx="3.5" fill="currentColor" />
-      <rect x="8" y="36" width="48" height="9" rx="3.5" fill="#FF7A00" />
-      <path d="M11.5 49h41a3.5 3.5 0 0 1 3.5 3.5v2A3.5 3.5 0 0 1 52.5 58H38l-6 6-6-6H11.5A3.5 3.5 0 0 1 8 54.5v-2A3.5 3.5 0 0 1 11.5 49Z" fill="currentColor" />
-    </svg>
+    <img
+      src={`${RUTA}marca/estook-isotipo.png`}
+      alt="Estook"
+      className={`${className} object-contain`}
+      width={336}
+      height={415}
+    />
   )
 }
 
-export function Logotipo({ conClaim = true }: { conClaim?: boolean }) {
+/** El logotipo completo, con su claim. Es el oficial: no se sustituye por texto. */
+export function Logotipo({ conClaim = true, className = '' }: { conClaim?: boolean; className?: string }) {
   return (
-    <div className="flex items-center gap-3 text-tinta">
-      <Isotipo className="size-9" />
-      <div className="leading-none">
-        <p className="font-titulo text-xl font-semibold uppercase tracking-[0.14em]">Estook</p>
-        {conClaim && (
-          <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-naranja">
-            Tu cocina, bajo control.
-          </p>
-        )}
-      </div>
-    </div>
+    <img
+      src={`${RUTA}marca/estook-logo${conClaim ? '' : '-compacto'}.png`}
+      alt="Estook · Tu cocina, bajo control."
+      className={`${conClaim ? 'h-10' : 'h-6'} w-auto object-contain object-left ${className}`}
+    />
+  )
+}
+
+/** La cara de Fogón, el asistente. */
+export function CaraFogon({ className = 'size-8' }: { className?: string }) {
+  return (
+    <img
+      src={`${RUTA}marca/fogon.png`}
+      alt="Fogón"
+      className={`${className} rounded-full object-cover`}
+      width={512}
+      height={512}
+    />
   )
 }

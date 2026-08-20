@@ -4,7 +4,7 @@ import {
   ArrowRight, BarChart3, Boxes, CalendarClock, Check, ChefHat, ClipboardCheck,
   FileText, MessageSquare, Smartphone, Star, Store, WifiOff,
 } from 'lucide-react'
-import { Isotipo, Logotipo } from '@/marca/Logo'
+import { CaraFogon, Logotipo } from '@/marca/Logo'
 import { Boton } from '@/componentes/Boton'
 import { PANTALLAS } from '@/paginas/Mockups'
 import { MenuMovil } from '@/paginas/MenuMovil'
@@ -43,9 +43,9 @@ const apps = [
 ]
 
 const pasos = [
-  ['Dices cómo se llama tu bar', 'Estook lo busca en Google y ya sabe tu dirección, tus horarios, tu valoración y qué locales tienes al lado. Tres minutos y está configurado.'],
-  ['Metes lo que compras y lo que vendes', 'Los albaranes entran por foto y la carta se monta arrastrando. Con el formato y el rendimiento, el coste real de cada plato sale solo.'],
-  ['Estook te avisa antes de que duela', 'Cuando un proveedor sube el pescado, cuando un plato se queda al 2 % de margen o cuando te caducan dos kilos de merluza el jueves.'],
+  ['Indica el nombre de tu local', 'Estook lo localiza y recupera la dirección, los horarios, la valoración y los establecimientos de la zona. La configuración inicial queda hecha en tres minutos.'],
+  ['Registra tus compras y tu carta', 'Los albaranes se registran fotografiándolos y la carta se monta en pantalla. Con el formato de compra y el rendimiento, el coste real de cada plato se calcula automáticamente.'],
+  ['Recibe los avisos que importan', 'Subidas de precio sin repercutir, platos por debajo del margen objetivo, género próximo a caducar y desviaciones de inventario, con la acción recomendada en cada caso.'],
 ]
 
 const planes = [
@@ -61,13 +61,13 @@ const planes = [
 ]
 
 export const PREGUNTAS: [string, string][] = [
-  ['¿Qué es Estook?', 'Estook es una aplicación de gestión para bares y restaurantes. Controla el inventario de la cámara, calcula el escandallo y el margen real de cada plato, monta la carta y el menú del día, lleva el cuadrante y los fichajes del equipo, guarda los registros de APPCC y analiza las ventas. Incluye a Fogón, un asistente que vigila el negocio y avisa de lo que va a costar dinero.'],
+  ['¿Qué es Estook?', 'Estook es una aplicación de gestión para bares y restaurantes. Controla el inventario de la cámara, calcula el escandallo y el margen real de cada plato, monta la carta y el menú del día, lleva el cuadrante y los fichajes del equipo, guarda los registros de APPCC y analiza las ventas. Incluye a Fogón, un asistente que analiza el negocio y avisa de lo que compromete el margen.'],
   ['¿Cuánto cuesta?', 'Hay tres planes por local y mes, con IVA incluido: Base 45 €, Pro 69 € y Grupo 55 € por local para dos o tres locales. Todos llevan todas las apps, todos los documentos y a Fogón; lo que cambia es el volumen y si el TPV entra conectado. Pagando el año por adelantado son dos meses gratis. A partir de cuatro locales, precio a medida.'],
   ['¿Hay prueba gratis?', 'Sí, catorce días. Se pide la forma de pago al empezar y, si no cancelas antes del día quince, se cobra el plan que hayas elegido. Durante la prueba funciona todo, con algún límite de volumen.'],
   ['¿Se conecta con mi TPV?', 'Sí, en los planes Pro y Grupo, mediante una API unificada que soporta las marcas más habituales en España: Ágora, Hosteltáctil, Last.app, Revo, Lightspeed o Square, entre otras. Las ventas entran solas cada quince minutos. En el plan Base las ventas se meten por CSV, por foto del Z o con el total del día.'],
   ['¿Sirve para el APPCC?', 'Sí. Se monta el plan con sus puntos de control, límites y frecuencias, y el equipo lo rellena en dos toques firmando con su PIN. Fuera de rango no se puede seguir sin registrar la acción correctiva. De ahí sale la carpeta de inspección del periodo en PDF.'],
   ['¿Funciona sin cobertura?', 'Sí. Se instala en el móvil como una app y lo que se apunta sin señal (fichajes, mermas, registros de APPCC) se guarda en el teléfono y sube solo al recuperar la conexión, en orden y sin duplicar.'],
-  ['¿Qué hace Fogón exactamente?', 'Lee un resumen vivo del negocio (precios, cámara, ventas, cuadrante, reseñas) y avisa por su cuenta en el Panel: qué plato se ha quedado sin margen, qué producto caduca, qué día te sobra personal. Propone y rellena, pero nunca guarda nada solo: la última palabra es tuya.'],
+  ['¿Qué hace Fogón exactamente?', 'Lee un resumen vivo del negocio (precios, cámara, ventas, cuadrante, reseñas) y avisa por su cuenta en el Panel: qué plato ha quedado por debajo del margen objetivo, qué producto está próximo a caducar o qué día hay personal de más. Propone y rellena, pero nunca guarda nada por su cuenta: la decisión es del responsable.'],
   ['¿Puede verlo todo mi equipo?', 'No, y esa es la idea. Cada rol ve lo suyo: el cocinero ve los gramajes y los pasos sin un solo importe, sala ve el menú y los alérgenos, la gestoría ve los periodos cerrados. Los permisos se ajustan casilla a casilla y se aplican en el servidor, no escondiendo cosas en la pantalla.'],
 ]
 
@@ -112,9 +112,9 @@ export function Landing() {
               Tu cocina, bajo control.
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/75">
-              Controla el género, calcula lo que te cuesta cada plato de verdad, monta la carta y
-              los turnos, y te avisa cuando algo se te está comiendo el margen. Todo desde el móvil,
-              sin hojas de cálculo y sin echar la tarde.
+              Controla el género, calcula el coste real de cada plato, monta la carta y los turnos y
+              genera tu documentación. Con avisos automáticos cuando algo compromete tu margen. Todo
+              desde el móvil, sin hojas de cálculo.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link to="/entrar?alta=1"><Boton tamano="grande">Empezar la prueba de 14 días <ArrowRight className="size-4" /></Boton></Link>
@@ -132,13 +132,13 @@ export function Landing() {
         <section className="border-b border-borde bg-panel">
           <div className="mx-auto max-w-[1200px] px-4 py-14 md:px-8">
             <Aparece>
-              <h2 className="font-titulo text-2xl font-semibold">Esto te está pasando ahora mismo</h2>
+              <h2 className="font-titulo text-2xl font-semibold">Lo que cuesta no tenerlo controlado</h2>
             </Aparece>
             <div className="mt-8 grid gap-8 md:grid-cols-3">
               {[
-                ['El pescado subió un 18 %', 'y tú sigues cobrando lo mismo desde marzo. Nadie te avisó, porque nadie lo estaba mirando.'],
-                ['Se van dos kilos de merluza', 'y no sabes si fue merma, ración de más o se caducó en la cámara de abajo.'],
-                ['El cierre te lleva media hora', 'y aun así, a fin de mes, el inventario no cuadra y no sabes por dónde empezar a buscar.'],
+                ['El pescado sube un 18 %', 'y el plato sigue al mismo precio desde marzo, porque nadie estaba comparando los albaranes.'],
+                ['Desaparecen dos kilos de merluza', 'y no hay forma de saber si fue merma, ración de más o caducidad.'],
+                ['El cierre lleva media hora', 'y a fin de mes el inventario sigue sin cuadrar, sin una pista de por dónde empezar.'],
               ].map(([t, s], i) => (
                 <Aparece key={t} className={`[transition-delay:${i * 80}ms]`}>
                   <p className="font-titulo text-lg font-semibold">{t}</p>
@@ -154,8 +154,7 @@ export function Landing() {
           <Aparece>
             <h2 className="font-titulo text-3xl font-semibold">Cómo funciona</h2>
             <p className="mt-3 max-w-2xl text-tinta-suave">
-              El primer paso te lleva tres minutos. Los otros dos los hace la app sola mientras tú
-              estás en la barra.
+              La puesta en marcha lleva tres minutos. A partir de ahí, la aplicación trabaja sola.
             </p>
           </Aparece>
           <ol className="mt-10 grid gap-6 md:grid-cols-3">
@@ -177,7 +176,7 @@ export function Landing() {
             <Aparece>
               <h2 className="font-titulo text-3xl font-semibold">La app por dentro</h2>
               <p className="mt-3 max-w-2xl text-tinta-suave">
-                Toca cada apartado y verás qué hace y cómo se ve en el móvil.
+                Selecciona un apartado para ver qué hace y cómo se presenta en el móvil.
               </p>
             </Aparece>
 
@@ -217,8 +216,8 @@ export function Landing() {
           <Aparece>
             <h2 className="font-titulo text-3xl font-semibold">Todo lo necesario para tu cocina, en una sola app</h2>
             <p className="mt-3 max-w-2xl text-tinta-suave">
-              Ocho partes que trabajan con la misma información, así que no hay que apuntar nada dos
-              veces. Sube el precio del pescado en un albarán y el margen de tus platos cambia solo.
+              Ocho áreas que comparten la misma información, sin duplicar trabajo. Si sube el precio
+              del pescado en un albarán, el margen de los platos que lo llevan se actualiza solo.
             </p>
           </Aparece>
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -241,25 +240,25 @@ export function Landing() {
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-naranja">Fogón</p>
               <h2 className="mt-3 font-titulo text-3xl font-semibold">El asistente de tu cocina</h2>
               <p className="mt-4 leading-relaxed text-white/70">
-                No es un chat pegado al lado. Fogón mira el negocio entero — precios, cámara, ventas,
-                cuadrante, reseñas — y avisa por su cuenta de lo que va a doler. Propone, rellena y te
-                deja a ti la última palabra: nunca guarda nada solo.
+                Fogón analiza el negocio completo — precios, existencias, ventas, cuadrante y
+                reseñas — y avisa por su cuenta de lo que compromete el margen. Propone y rellena,
+                pero la decisión es siempre tuya: nunca guarda nada por su cuenta.
               </p>
               <p className="mt-4 leading-relaxed text-white/70">
-                Y habla distinto según con quién: al cocinero le cuenta sus tareas y sus caducidades,
-                sin un solo importe; a ti te cuenta el dinero.
+                Y se dirige a cada persona según su puesto: al cocinero le informa de sus tareas y
+                caducidades, sin un solo importe; la información económica es solo para ti.
               </p>
             </Aparece>
             <div className="flex flex-col gap-3">
               {[
-                ['El rabo de toro te deja un 2 % de margen', 'Sus ingredientes han subido un 14 % desde marzo y el precio sigue igual.'],
-                ['Quedan 2,1 kg de merluza que caducan el 19', 'Y hoy no está en el menú. ¿La meto de segundo?'],
-                ['El martes es tu día más flojo desde junio', 'Te sobran dos horas de sala en el cuadrante.'],
+                ['El rabo de toro está al 2 % de margen', 'Sus ingredientes han subido un 14 % desde marzo y el precio de venta no se ha revisado.'],
+                ['Quedan 2,1 kg de merluza con caducidad el día 19', 'No está incluida en el menú de hoy. Se recomienda darle salida.'],
+                ['El martes es el día de menor facturación desde junio', 'El cuadrante tiene dos horas de sala por encima de lo necesario.'],
               ].map(([t, s]) => (
                 <Aparece key={t}>
                   <div className="rounded-lg bg-white p-4 text-tinta">
                     <div className="flex items-start gap-3">
-                      <Isotipo className="size-5 shrink-0 text-tinta" />
+                      <CaraFogon className="size-8 shrink-0" />
                       <div>
                         <p className="text-sm font-semibold">{t}</p>
                         <p className="mt-0.5 text-sm text-tinta-suave">{s}</p>
@@ -359,10 +358,10 @@ export function Landing() {
         {/* 10 · Cierre */}
         <section className="bg-tinta text-white">
           <div className="mx-auto max-w-[1200px] px-4 py-16 text-center md:px-8">
-            <h2 className="font-titulo text-3xl font-semibold">Catorce días para verlo con tus números</h2>
+            <h2 className="font-titulo text-3xl font-semibold">Catorce días para comprobarlo con tus propios números</h2>
             <p className="mx-auto mt-3 max-w-xl text-white/70">
-              Se configura en tres minutos: dices cómo se llama tu bar y Estook ya sabe qué cocinas,
-              qué dicen tus clientes y quién tienes al lado.
+              La configuración inicial lleva tres minutos. Desde la primera pantalla, Estook trabaja
+              con los datos reales de tu establecimiento.
             </p>
             <Link to="/entrar?alta=1" className="mt-8 inline-block">
               <Boton tamano="grande">Empezar ahora <ArrowRight className="size-4" /></Boton>
@@ -376,7 +375,7 @@ export function Landing() {
       <footer className="border-t border-borde bg-lienzo pb-24 md:pb-0">
         <div className="mx-auto flex max-w-[1200px] flex-col gap-4 px-4 py-8 text-sm text-tinta-tenue md:flex-row md:items-center md:justify-between md:px-8">
           <Logotipo />
-          <p>Estook · gestión para bares y restaurantes · hecho para quien está de pie doce horas al día.</p>
+          <p>Estook · gestión para bares y restaurantes · diseñado para el ritmo de una cocina.</p>
         </div>
       </footer>
     </div>

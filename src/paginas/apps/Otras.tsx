@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { BarChart3, CalendarClock, ClipboardCheck, MessageSquare, Star, Store } from 'lucide-react'
+import { BarChart3, CalendarClock, MessageSquare, Star, Store } from 'lucide-react'
 import { Tarjeta } from '@/componentes/Tarjeta'
 import { Boton } from '@/componentes/Boton'
 import { Insignia } from '@/componentes/Estado'
@@ -34,21 +34,6 @@ function Proximamente({ partes }: { partes: [string, string][] }) {
         pantalla. Mientras tanto, <Link to="/app/despensa" className="font-semibold text-naranja-oscuro underline">Despensa</Link> ya funciona entera.
       </p>
     </Tarjeta>
-  )
-}
-
-export function Servicio() {
-  return (
-    <div className="flex flex-col gap-4">
-      <Cabecera icono={<ClipboardCheck className="size-6 text-naranja" aria-hidden />} titulo="Servicio"
-        texto="La jornada, de dónde salen las ventas, el APPCC firmado con PIN y el cierre en cuatro pasos." />
-      <Proximamente partes={[
-        ['Jornada', 'Se abre sola con el primer fichaje o la primera venta, con la hora de corte a las 06:00.'],
-        ['Ventas', 'Cuatro caminos: TPV, CSV, foto del Z o total del día, cada uno con su fiabilidad.'],
-        ['APPCC', 'Plan versionado, registro en dos toques y acción correctiva obligatoria fuera de rango.'],
-        ['Cierre', 'Sesenta segundos: ventas, mermas, APPCC pendiente y firma con PIN.'],
-      ]} />
-    </div>
   )
 }
 

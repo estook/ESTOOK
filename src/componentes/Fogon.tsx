@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Send, Sparkles } from 'lucide-react'
+import { Send } from 'lucide-react'
 import { Hoja } from '@/componentes/Hoja'
+import { CaraFogon } from '@/marca/Logo'
 import { Boton } from '@/componentes/Boton'
 import { Aviso } from '@/componentes/Estado'
 import { useSesion } from '@/app/sesion'
@@ -77,7 +78,7 @@ export function Fogon({ abierto, onCerrar, pantalla }: { abierto: boolean; onCer
           <div key={i} className={t.de === 'yo' ? 'self-end max-w-[85%]' : 'max-w-[95%]'}>
             {t.de === 'fogon' && (
               <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-naranja-oscuro">
-                <Sparkles className="size-3.5" aria-hidden /> Fogón
+                <CaraFogon className="size-5" /> Fogón
               </p>
             )}
             <div className={`rounded-lg px-3 py-2 text-sm ${t.de === 'yo' ? 'bg-tinta text-white' : 'border border-borde bg-panel'}`}>

@@ -1,11 +1,16 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Euro, LayoutGrid, Sparkles, Smartphone, X } from 'lucide-react'
+import { CaraFogon } from '@/marca/Logo'
+import { Euro, LayoutGrid, Smartphone, X } from 'lucide-react'
+
+function CaraFogonIcono({ className }: { className?: string }) {
+  return <CaraFogon className={className ?? 'size-5'} />
+}
 
 const ENLACES = [
   { texto: 'Cómo funciona', ancla: '#como-funciona', icono: LayoutGrid },
   { texto: 'Por dentro', ancla: '#por-dentro', icono: Smartphone },
-  { texto: 'Fogón', ancla: '#fogon', icono: Sparkles },
+  { texto: 'Fogón', ancla: '#fogon', icono: CaraFogonIcono },
   { texto: 'Precios', ancla: '#precios', icono: Euro },
 ]
 

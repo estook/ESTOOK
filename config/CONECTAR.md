@@ -132,14 +132,21 @@ spam y tienen un tope de tres o cuatro al día. Con Resend salen desde tu domini
 4. **Authentication › Email Templates**: cambia los textos al castellano y quita la marca de
    Supabase. El enlace del botón debe ser `{{ .ConfirmationURL }}`.
 
-La misma clave sirve luego para las invitaciones al equipo y para mandar los horarios en PDF,
-desde una función de servidor con el secreto `RESEND_API_KEY`.
+**Importante:** la clave de Resend por sí sola no cambia nada. Los correos de *confirmar
+cuenta* y *recuperar contraseña* los manda Supabase, y solo salen por Resend cuando el SMTP de
+arriba está puesto. Si el correo sigue llegando desde Supabase, es que falta ese paso.
+
+Los correos propios de la app (invitaciones al equipo, horarios en PDF, documentos, resumen
+semanal) van por la función `correo`, que usa la API de Resend con los secretos
+`RESEND_API_KEY` y `MAIL_FROM`. Esa función ya lleva la plantilla con la marca del local y el
+tope de 30 correos al día.
 
 ### 1.7 Publicar las funciones
 
 ```bash
 supabase functions deploy fogon
 supabase functions deploy lugares
+supabase functions deploy correo
 ```
 
 **Comprobación:** en **Edge Functions** aparecen las dos en verde. Si llamas a `fogon` sin
@@ -293,7 +300,7 @@ Con esto en verde, la base está conectada de verdad:
 
 - [ ] Las cuatro consultas SQL pasan sin error y las tablas salen con RLS.
 - [ ] `supabase secrets list` devuelve los seis secretos.
-- [ ] `supabase functions deploy` deja `fogon` y `lugares` en verde.
+- [ ] `supabase functions deploy` deja `fogon`, `lugares` y `correo` en verde.
 - [ ] `npm run dev` arranca y la pantalla `/cimientos` dice **Servidor conectado**.
 - [ ] Apuntas una merma en modo avión, vuelves a tener cobertura y sube sola.
 - [ ] En el bundle compilado no aparece ninguna clave de servidor:

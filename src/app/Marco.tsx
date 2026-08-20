@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, Navigate, NavLink, Outlet, useLocation } from 'react-router-dom'
-import { Bell, ChevronDown, Grid2x2, LayoutDashboard, LogOut, MessageSquare, Settings, Sparkles } from 'lucide-react'
-import { Isotipo } from '@/marca/Logo'
+import { Bell, ChevronDown, Grid2x2, LayoutDashboard, LogOut, Settings } from 'lucide-react'
+import { Isotipo, CaraFogon } from '@/marca/Logo'
 import { Cargando, Insignia } from '@/componentes/Estado'
 import { APPS, Rueda } from '@/componentes/Rueda'
 import { useSesion } from '@/app/sesion'
@@ -26,7 +26,7 @@ export function Marco() {
       <header className="sticky top-0 z-30 border-b border-borde bg-lienzo">
         <div className="mx-auto flex h-14 max-w-[1440px] items-center gap-4 px-4 md:px-6">
           <Link to="/app" className="flex items-center gap-2">
-            <Isotipo className="size-7 text-tinta" />
+            <Isotipo className="h-7 w-auto" />
           </Link>
 
           {accesos.length > 1 ? (
@@ -69,7 +69,7 @@ export function Marco() {
               onClick={() => setFogon(true)}
               className="hidden h-9 items-center gap-2 rounded-md bg-tinta px-3 text-sm font-semibold text-white md:flex"
             >
-              <Sparkles className="size-4" aria-hidden /> Fogón
+              <CaraFogon className="size-5" /> Fogón
             </button>
             <button onClick={() => void salir()} aria-label="Salir"
               className="grid size-9 place-items-center rounded-md text-tinta-suave hover:bg-panel">
@@ -110,7 +110,7 @@ export function Marco() {
         aria-label="Preguntar a Fogón"
         className="fixed bottom-24 right-4 z-40 grid size-12 place-items-center rounded-full bg-tinta text-white shadow-tarjeta lg:hidden"
       >
-        <MessageSquare className="size-5" aria-hidden />
+        <CaraFogon className="size-8" />
       </button>
 
       <Rueda abierta={rueda} apps={APPS} onCerrar={() => setRueda(false)} />

@@ -96,11 +96,11 @@ export function PanelInicio() {
               <div className="grid grid-cols-2 gap-2">
                 <Link to="/app/despensa"><Boton ancho tono="discreto"><ScanLine className="size-4" aria-hidden /> Escanear albarán</Boton></Link>
                 <Link to="/app/despensa"><Boton ancho tono="discreto"><ShoppingCart className="size-4" aria-hidden /> Nuevo pedido</Boton></Link>
-                <Link to="/diagnostico"><Boton ancho tono="discreto"><Trash2 className="size-4" aria-hidden /> Apuntar merma</Boton></Link>
-                <Link to="/app/negocio"><Boton ancho tono="discreto">Cerrar caja <ArrowRight className="size-4" aria-hidden /></Boton></Link>
+                <Link to="/app/servicio"><Boton ancho tono="discreto"><Trash2 className="size-4" aria-hidden /> Apuntar merma</Boton></Link>
+                <Link to="/app/servicio"><Boton ancho tono="discreto">Cerrar caja <ArrowRight className="size-4" aria-hidden /></Boton></Link>
               </div>
               <p className="mt-3 text-xs text-tinta-tenue">
-                Escanear albarán y cerrar caja llegan con los módulos de despensa por foto y servicio.
+                Escanear albarán llegará con la lectura por foto; el resto ya funciona.
               </p>
             </Tarjeta>
           </div>
