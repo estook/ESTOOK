@@ -1,7 +1,10 @@
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { ProveedorSesion } from '@/app/sesion'
 import { Marco } from '@/app/Marco'
-import { Landing } from '@/paginas/Landing'
+import { Inicio } from '@/paginas/web/Inicio'
+import { Producto } from '@/paginas/web/Producto'
+import { FogonWeb } from '@/paginas/web/FogonWeb'
+import { Precios } from '@/paginas/web/Precios'
 import { Entrar } from '@/paginas/Entrar'
 import { Cimientos } from '@/paginas/Cimientos'
 import { Admin } from '@/paginas/Admin'
@@ -18,7 +21,10 @@ export function App() {
     <ProveedorSesion>
       <HashRouter>
         <Routes>
-          <Route path="/" element={<Landing />} />
+          <Route path="/" element={<Inicio />} />
+          <Route path="/producto" element={<Producto />} />
+          <Route path="/fogon" element={<FogonWeb />} />
+          <Route path="/precios" element={<Precios />} />
           <Route path="/entrar" element={<Entrar />} />
           <Route path="/app" element={<Marco />}>
             <Route index element={<PanelInicio />} />

@@ -8,10 +8,10 @@ function CaraFogonIcono({ className }: { className?: string }) {
 }
 
 const ENLACES = [
-  { texto: 'Cómo funciona', ancla: '#como-funciona', icono: LayoutGrid },
-  { texto: 'Por dentro', ancla: '#por-dentro', icono: Smartphone },
-  { texto: 'Fogón', ancla: '#fogon', icono: CaraFogonIcono },
-  { texto: 'Precios', ancla: '#precios', icono: Euro },
+  { texto: 'Inicio', ruta: '/', icono: LayoutGrid },
+  { texto: 'La aplicación', ruta: '/producto', icono: Smartphone },
+  { texto: 'Fogón', ruta: '/fogon', icono: CaraFogonIcono },
+  { texto: 'Precios', ruta: '/precios', icono: Euro },
 ]
 
 /**
@@ -54,16 +54,16 @@ export function MenuMovil() {
             </p>
 
             {ENLACES.map((e, i) => (
-              <a
-                key={e.ancla}
-                href={e.ancla}
+              <Link
+                key={e.ruta}
+                to={e.ruta}
                 onClick={() => setAbierto(false)}
                 style={{ animationDelay: `${i * 45}ms` }}
                 className="flex w-[240px] animate-subirCorto items-center gap-3 rounded-xl bg-lienzo px-4 py-3 font-semibold shadow-tarjeta active:bg-panel"
               >
                 <e.icono className="size-5 text-naranja" aria-hidden />
                 {e.texto}
-              </a>
+              </Link>
             ))}
 
             <Link
