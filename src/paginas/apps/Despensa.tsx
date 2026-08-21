@@ -91,6 +91,10 @@ function Productos({ localId }: { localId?: string }) {
   const [f, setF] = useState<Formulario>(FORM_VACIO)
   const [stockNuevo, setStockNuevo] = useState('')
   const [motivo, setMotivo] = useState('')
+  const [editando, setEditando] = useState(false)
+  const [edicion, setEdicion] = useState<{ precio: string; minimo: string; rendimiento: number }>({
+    precio: '', minimo: '', rendimiento: 1,
+  })
 
   const lista = useMemo(() => {
     const t = busca.trim().toLowerCase()
@@ -137,7 +141,7 @@ function Productos({ localId }: { localId?: string }) {
       unidad_compra: `${f.formato} de ${f.contenido} ${f.unidad}`,
       unidad_uso: unidadUso,
       factor: aPequena(contenido, unidadUso),          // cuántos g/ml/ud trae el formato
-      rendimiento: f.rendimiento,
+      rendimiento: f.rendimiento || 1,          // 0 = «ya lo diré»: se guarda 1 y queda pendiente
       stock_actual: f.stock ? aPequena(Number(f.stock.replace(',', '.')), unidadUso) : 0,
       minimo: f.minimo ? aPequena(Number(f.minimo.replace(',', '.')), unidadUso) : null,
       precio_ultimo: f.precio ? Number(f.precio.replace(',', '.')) : null,
@@ -195,7 +199,13 @@ function Productos({ localId }: { localId?: string }) {
         columnas={columnas} filas={lista} claveFila={(p) => p.id}
         onAbrir={(p) => {
           setFicha(p)
+          setEditando(false)
           setStockNuevo(String(aGrande(p.stock_actual, p.unidad_uso as 'g' | 'ml' | 'ud')))
+          setEdicion({
+            precio: p.precio_ultimo != null ? String(p.precio_ultimo) : '',
+            minimo: p.minimo != null ? String(aGrande(p.minimo, p.unidad_uso as 'g' | 'ml' | 'ud')) : '',
+            rendimiento: p.rendimiento,
+          })
         }}
         vacio={
           <Vacio
@@ -239,6 +249,59 @@ function Productos({ localId }: { localId?: string }) {
                   más alto que el de compra.
                 </p>
               )}
+
+              <Tarjeta
+                titulo={editando ? 'Editar el producto' : 'Datos de compra'}
+                acciones={
+                  <Boton tamano="pequeno" tono="discreto" onClick={() => setEditando(!editando)}>
+                    {editando ? 'Dejarlo' : 'Editar'}
+                  </Boton>
+                }
+              >
+                {editando ? (
+                  <div className="flex flex-col gap-3">
+                    <Campo etiqueta={`Precio de 1 ${ficha.unidad_compra ?? 'formato'}`} inputMode="decimal"
+                      value={edicion.precio} onChange={(e) => setEdicion({ ...edicion, precio: e.target.value })} />
+                    <Campo etiqueta={`Avisar por debajo de (${grande})`} inputMode="decimal"
+                      value={edicion.minimo} onChange={(e) => setEdicion({ ...edicion, minimo: e.target.value })} />
+                    <div>
+                      <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-tinta-suave">
+                        Cuánto se aprovecha
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {MERMAS_HABITUALES.map((m) => (
+                          <button key={m.texto} type="button"
+                            onClick={() => setEdicion({ ...edicion, rendimiento: m.rendimiento })}
+                            className={`rounded-md border px-3 py-1.5 text-sm font-semibold ${
+                              edicion.rendimiento === m.rendimiento
+                                ? 'border-naranja bg-naranja text-white'
+                                : 'border-borde bg-lienzo text-tinta-suave'}`}>
+                            {m.texto}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <Boton
+                      cargando={guardar.isPending}
+                      onClick={async () => {
+                        await guardar.mutateAsync({
+                          id: ficha.id,
+                          nombre: ficha.nombre,
+                          precio_ultimo: edicion.precio ? Number(edicion.precio.replace(',', '.')) : null,
+                          minimo: edicion.minimo ? aPequena(Number(edicion.minimo.replace(',', '.')), unidad) : null,
+                          rendimiento: edicion.rendimiento,
+                        })
+                        setEditando(false); setFicha(null)
+                      }}
+                    >Guardar cambios</Boton>
+                  </div>
+                ) : (
+                  <p className="text-sm text-tinta-suave">
+                    Se compra en {ficha.unidad_compra ?? 'formato sin definir'} a {euros(ficha.precio_ultimo)}.
+                    {ficha.minimo != null && ` Se avisa por debajo de ${mostrar(ficha.minimo, unidad)}.`}
+                  </p>
+                )}
+              </Tarjeta>
 
               <Tarjeta titulo="Corregir lo que hay">
                 <p className="text-sm text-tinta-suave">
@@ -304,6 +367,14 @@ function Productos({ localId }: { localId?: string }) {
           <Bloque numero={3} titulo="¿Se limpia antes de usarlo?"
             explicacion="Lo que se va en espinas, piel o recortes. Es lo que hace que el kilo útil cueste más que el comprado.">
             <div className="flex flex-wrap gap-2">
+              <button type="button"
+                onClick={() => setF({ ...f, rendimiento: 0 })}
+                className={`rounded-md border px-3 py-2 text-sm font-semibold transition-colors ${
+                  f.rendimiento === 0
+                    ? 'border-naranja bg-naranja text-white'
+                    : 'border-borde bg-lienzo text-tinta-suave hover:bg-panel'}`}>
+                Pregúntamelo cuando lo reciba
+              </button>
               {MERMAS_HABITUALES.map((m) => (
                 <button key={m.texto} type="button"
                   onClick={() => setF({ ...f, rendimiento: m.rendimiento })}
@@ -380,7 +451,14 @@ function Proveedores({ localId }: { localId?: string }) {
   const { data, isLoading } = useProveedores(localId)
   const guardar = useGuardarProveedor(localId)
   const [nuevo, setNuevo] = useState(false)
+  const [editando, setEditando] = useState<Proveedor | null>(null)
   const [form, setForm] = useState<Partial<Proveedor> & { dias?: string[] }>({ dias: [] })
+
+  function abrirFicha(p: Proveedor) {
+    setEditando(p)
+    setForm({ ...p, dias: p.dias_reparto ?? [] })
+    setNuevo(true)
+  }
 
   if (isLoading) return <Cargando />
 
@@ -398,11 +476,13 @@ function Proveedores({ localId }: { localId?: string }) {
         <p className="text-sm text-tinta-suave">
           Con el teléfono guardado, los pedidos salen por WhatsApp desde el móvil.
         </p>
-        <Boton onClick={() => setNuevo(true)}><Plus className="size-4" aria-hidden /> Nuevo proveedor</Boton>
+        <Boton onClick={() => { setEditando(null); setForm({ dias: [] }); setNuevo(true) }}>
+          <Plus className="size-4" aria-hidden /> Nuevo proveedor
+        </Boton>
       </div>
 
       <Tabla
-        columnas={columnas} filas={data ?? []} claveFila={(p) => p.id}
+        columnas={columnas} filas={data ?? []} claveFila={(p) => p.id} onAbrir={abrirFicha}
         vacio={
           <Vacio
             icono={<Truck className="size-8" aria-hidden />}
@@ -413,13 +493,18 @@ function Proveedores({ localId }: { localId?: string }) {
         }
       />
 
-      <Hoja abierta={nuevo} titulo="Nuevo proveedor" onCerrar={() => setNuevo(false)}
+      <Hoja
+        abierta={nuevo}
+        titulo={editando ? editando.nombre : 'Nuevo proveedor'}
+        descripcion={editando ? 'Cambia lo que necesites y guarda.' : undefined}
+        onCerrar={() => { setNuevo(false); setEditando(null) }}
         pie={<>
-          <Boton tono="discreto" onClick={() => setNuevo(false)}>Cancelar</Boton>
+          <Boton tono="discreto" onClick={() => { setNuevo(false); setEditando(null) }}>Cancelar</Boton>
           <Boton cargando={guardar.isPending} disabled={!form.nombre?.trim()}
             onClick={async () => {
               if (!form.nombre?.trim()) return
               await guardar.mutateAsync({
+                id: editando?.id,
                 nombre: form.nombre.trim(),
                 telefono: form.telefono ?? null,
                 correo: form.correo ?? null,
@@ -428,8 +513,8 @@ function Proveedores({ localId }: { localId?: string }) {
                 pedido_minimo: form.pedido_minimo != null ? Number(form.pedido_minimo) : null,
                 notas: form.notas ?? null,
               })
-              setNuevo(false); setForm({ dias: [] })
-            }}>Guardar</Boton>
+              setNuevo(false); setEditando(null); setForm({ dias: [] })
+            }}>{editando ? 'Guardar cambios' : 'Guardar'}</Boton>
         </>}>
         <div className="flex flex-col gap-6 pt-1">
           <Bloque numero={1} titulo="Quién es">

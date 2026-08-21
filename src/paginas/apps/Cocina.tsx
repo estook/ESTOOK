@@ -162,7 +162,8 @@ function FichaAbierta({
 
   const [productoId, setProductoId] = useState('')
   const [gramos, setGramos] = useState('')
-  const [precio, setPrecio] = useState('')
+  const [editando, setEditando] = useState(false)
+  const [datos, setDatos] = useState({ nombre: '', familia: '', precio: '', iva: '10' })
 
   const cuentas = useMemo(
     () => plato ? escandallo(ingredientes ?? [], productos, plato) : null,
@@ -268,22 +269,59 @@ function FichaAbierta({
         </Tarjeta>
 
         {conImportes && (
-          <Tarjeta titulo="Precio de venta">
-            <div className="flex items-end gap-2">
-              <div className="flex-1">
-                <Campo etiqueta="Precio con IVA" inputMode="decimal"
-                  placeholder={String(plato.precio_venta ?? '')}
-                  value={precio} onChange={(e) => setPrecio(e.target.value)} />
+          <Tarjeta
+            titulo={editando ? 'Editar el plato' : 'Datos del plato'}
+            acciones={
+              <Boton tamano="pequeno" tono="discreto"
+                onClick={() => {
+                  setDatos({
+                    nombre: plato.nombre,
+                    familia: plato.familia ?? '',
+                    precio: plato.precio_venta != null ? String(plato.precio_venta) : '',
+                    iva: String(plato.iva ?? 10),
+                  })
+                  setEditando(!editando)
+                }}>
+                {editando ? 'Dejarlo' : 'Editar'}
+              </Boton>
+            }
+          >
+            {editando ? (
+              <div className="flex flex-col gap-3">
+                <Campo etiqueta="Nombre" obligatorio value={datos.nombre}
+                  onChange={(e) => setDatos({ ...datos, nombre: e.target.value })} />
+                <Campo etiqueta="Familia" value={datos.familia}
+                  onChange={(e) => setDatos({ ...datos, familia: e.target.value })} />
+                <div className="grid grid-cols-2 gap-3">
+                  <Campo etiqueta="Precio con IVA" inputMode="decimal" value={datos.precio}
+                    onChange={(e) => setDatos({ ...datos, precio: e.target.value })} />
+                  <Selector etiqueta="IVA" value={datos.iva}
+                    onChange={(e) => setDatos({ ...datos, iva: e.target.value })}>
+                    <option value="10">10 %</option>
+                    <option value="21">21 %</option>
+                    <option value="4">4 %</option>
+                  </Selector>
+                </div>
+                <Boton
+                  cargando={guardar.isPending}
+                  onClick={async () => {
+                    if (!datos.nombre.trim()) return
+                    await guardar.mutateAsync({
+                      id: plato.id,
+                      nombre: datos.nombre.trim(),
+                      familia: datos.familia || null,
+                      precio_venta: datos.precio ? Number(datos.precio.replace(',', '.')) : null,
+                      iva: Number(datos.iva),
+                    })
+                    setEditando(false); onCerrar()
+                  }}
+                >Guardar cambios</Boton>
               </div>
-              <Boton
-                cargando={guardar.isPending}
-                onClick={async () => {
-                  if (!precio) return
-                  await guardar.mutateAsync({ id: plato.id, nombre: plato.nombre, precio_venta: Number(precio.replace(',', '.')) })
-                  setPrecio('')
-                }}
-              >Guardar</Boton>
-            </div>
+            ) : (
+              <p className="text-sm text-tinta-suave">
+                {plato.familia ?? 'Sin familia'} · {euros(plato.precio_venta)} con IVA del {plato.iva} %.
+              </p>
+            )}
           </Tarjeta>
         )}
       </div>

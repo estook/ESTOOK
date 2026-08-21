@@ -4,6 +4,7 @@ import { Marco } from '@/app/Marco'
 import { Landing } from '@/paginas/Landing'
 import { Entrar } from '@/paginas/Entrar'
 import { Cimientos } from '@/paginas/Cimientos'
+import { Admin } from '@/paginas/Admin'
 import { PanelInicio } from '@/paginas/apps/PanelInicio'
 import { Despensa } from '@/paginas/apps/Despensa'
 import { Ajustes, Chat, Competencia, Equipo, Negocio, Resenas } from '@/paginas/apps/Otras'
@@ -29,6 +30,7 @@ export function App() {
             <Route path="chat" element={<Chat />} />
             <Route path="ajustes" element={<Ajustes />} />
           </Route>
+          <Route path="/admin" element={<Admin />} />
           <Route path="/diagnostico" element={<Cimientos />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

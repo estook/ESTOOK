@@ -17,9 +17,9 @@ export function Isotipo({ className = 'size-8' }: { className?: string }) {
 export function Logotipo({ conClaim = true, className = '' }: { conClaim?: boolean; className?: string }) {
   return (
     <img
-      src={`${RUTA}marca/estook-logo${conClaim ? '' : '-compacto'}.png`}
+      src={`${RUTA}marca/estook-logo.png`}
       alt="Estook · Tu cocina, bajo control."
-      className={`${conClaim ? 'h-10' : 'h-6'} w-auto object-contain object-left ${className}`}
+      className={`${conClaim ? 'h-11' : 'h-8'} w-auto object-contain object-left ${className}`}
     />
   )
 }
@@ -29,20 +29,12 @@ export function Logotipo({ conClaim = true, className = '' }: { conClaim?: boole
  * sobre fondo claro desaparecería. Con `suelto` se pinta sin círculo, para
  * cuando ya está encima de un fondo oscuro.
  */
-export function CaraFogon({ className = 'size-8', suelto = false }: { className?: string; suelto?: boolean }) {
-  const cara = (
+export function CaraFogon({ className = 'size-8' }: { className?: string; suelto?: boolean }) {
+  return (
     <img
       src={`${RUTA}marca/fogon.png`}
       alt="Fogón"
-      className="size-full object-contain"
-      width={512}
-      height={512}
+      className={`${className} shrink-0 rounded-lg object-contain`}
     />
-  )
-  if (suelto) return <span className={`${className} inline-block`}>{cara}</span>
-  return (
-    <span className={`${className} inline-grid shrink-0 place-items-center overflow-hidden rounded-full bg-tinta p-[12%]`}>
-      {cara}
-    </span>
   )
 }

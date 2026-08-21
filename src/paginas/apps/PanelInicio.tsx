@@ -1,28 +1,64 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, ScanLine, ShoppingCart, Trash2 } from 'lucide-react'
-import { Cifra, Tarjeta } from '@/componentes/Tarjeta'
+import {
+  AlertTriangle, Camera, ChevronRight, ClipboardCheck, DoorClosed, DoorOpen,
+  Package, Plus, Receipt, ShoppingCart, Timer, Trash2, X,
+} from 'lucide-react'
 import { Boton } from '@/componentes/Boton'
 import { Aviso, Cargando, Insignia } from '@/componentes/Estado'
+import { CaraFogon } from '@/marca/Logo'
 import { useSesion } from '@/app/sesion'
-import { cantidad, euros, usePedidos, useProductos } from '@/datos/despensa'
+import { euros, usePedidos, useProductos } from '@/datos/despensa'
+import { usePlatos } from '@/datos/cocina'
+import {
+  useAbrirJornada, useCerrarJornada, useJornadaDeHoy, usePlanAppcc, useRegistrosDeHoy,
+} from '@/datos/servicio'
 import { useCola } from '@/offline/useCola'
 
-/**
- * El Panel es el sitio donde se mira; las apps son donde se trabaja.
- * Nada se apila y no hay scroll infinito: widgets plegables, y plegados
- * enseñan su resumen en la cabecera.
- */
+const MANDA = ['gerente', 'jefe_cocina', 'jefe_sala']
+
+function saludo() {
+  const h = new Date().getHours()
+  return h < 12 ? 'Buenos días' : h < 20 ? 'Buenas tardes' : 'Buenas noches'
+}
+
+/** Las acciones rápidas dependen del puesto: cada uno ve lo suyo y nada más. */
+function accionesDeRol(rol: string) {
+  const todas = [
+    { clave: 'producto', texto: 'Añadir producto', icono: Package, ruta: '/app/despensa', roles: ['gerente', 'jefe_cocina', 'jefe_sala'] },
+    { clave: 'pedido', texto: 'Crear pedido', icono: ShoppingCart, ruta: '/app/despensa', roles: ['gerente', 'jefe_cocina', 'jefe_sala', 'cocinero'] },
+    { clave: 'merma', texto: 'Registrar merma', icono: Trash2, ruta: '/app/servicio', roles: ['gerente', 'jefe_cocina', 'jefe_sala', 'cocinero', 'sala'] },
+    { clave: 'appcc', texto: 'Registrar temperatura', icono: ClipboardCheck, ruta: '/app/servicio', roles: ['gerente', 'jefe_cocina', 'jefe_sala', 'cocinero', 'sala'] },
+    { clave: 'albaran', texto: 'Escanear albarán', icono: Camera, ruta: '/app/despensa', roles: ['gerente', 'jefe_cocina'], pronto: true },
+    { clave: 'factura', texto: 'Escanear factura', icono: Receipt, ruta: '/app/negocio', roles: ['gerente'], pronto: true },
+  ]
+  return todas.filter((a) => a.roles.includes(rol))
+}
+
 export function PanelInicio() {
-  const { actual } = useSesion()
+  const { actual, sesion } = useSesion()
+  const rol = actual?.rol ?? 'cocinero'
+  const manda = MANDA.includes(rol)
+
   const { data: productos, isLoading } = useProductos(actual?.local_id)
   const { data: pedidos } = usePedidos(actual?.local_id)
+  const { data: platos } = usePlatos(actual?.local_id)
+  const { data: jornada } = useJornadaDeHoy(actual?.local_id)
+  const { data: plan } = usePlanAppcc(actual?.local_id)
+  const { data: registros } = useRegistrosDeHoy(actual?.local_id)
+  const abrir = useAbrirJornada(actual?.local_id)
+  const cerrar = useCerrarJornada(actual?.local_id)
   const { conRed, enCola } = useCola()
+
+  const [acciones, setAcciones] = useState(false)
+  const [confirmar, setConfirmar] = useState<'abrir' | 'cerrar' | null>(null)
+  const [totalCierre, setTotalCierre] = useState('')
 
   if (!actual) {
     return (
       <Aviso nivel="importante" titulo="Tu cuenta todavía no tiene local">
-        Si eres el dueño, ejecuta <code>config/supabase/alta.sql</code> y <code>admin.sql</code> en
-        el editor SQL de Supabase. Si trabajas aquí, pide que te inviten.
+        Si eres el dueño, ejecuta <code>alta.sql</code> y <code>admin.sql</code> en el editor SQL de
+        Supabase. Si trabajas aquí, pide que te inviten.
       </Aviso>
     )
   }
@@ -30,81 +66,275 @@ export function PanelInicio() {
   const lista = productos ?? []
   const bajoMinimo = lista.filter((p) => p.minimo != null && p.stock_actual < p.minimo)
   const sinPrecio = lista.filter((p) => p.precio_ultimo == null)
+  const pedidosAbiertos = (pedidos ?? []).filter((p) => p.estado === 'borrador' || p.estado === 'enviado')
+  const appccPendiente = (plan?.puntos ?? []).filter((p) => !(registros ?? []).some((r) => r.punto_id === p.id))
+  const sinFicha = (platos ?? []).filter((p) => p.precio_venta == null)
+
+  const atencion = ([
+    bajoMinimo.length > 0 && {
+      clave: 'stock', titulo: 'Género bajo mínimo',
+      texto: `${bajoMinimo.slice(0, 3).map((p) => p.nombre).join(', ')}${bajoMinimo.length > 3 ? ` y ${bajoMinimo.length - 3} más` : ''}.`,
+      accion: 'Montar el pedido', ruta: '/app/despensa', icono: Package, nivel: 'alerta' as const,
+      visible: manda || rol === 'cocinero',
+    },
+    appccPendiente.length > 0 && {
+      clave: 'appcc', titulo: `Faltan ${appccPendiente.length} controles de APPCC`,
+      texto: appccPendiente.slice(0, 3).map((p) => p.nombre).join(', ') + '.',
+      accion: 'Registrar ahora', ruta: '/app/servicio', icono: ClipboardCheck, nivel: 'aviso' as const,
+      visible: true,
+    },
+    pedidosAbiertos.length > 0 && {
+      clave: 'pedidos', titulo: `${pedidosAbiertos.length} pedido(s) sin recibir`,
+      texto: 'Cuando llegue el género, recíbelo para que suba el stock.',
+      accion: 'Ver pedidos', ruta: '/app/despensa', icono: ShoppingCart, nivel: 'aviso' as const,
+      visible: manda,
+    },
+    sinPrecio.length > 0 && {
+      clave: 'precios', titulo: `${sinPrecio.length} producto(s) sin precio`,
+      texto: 'Sin precio, los platos que los llevan salen con el margen falseado.',
+      accion: 'Poner precios', ruta: '/app/despensa', icono: Receipt, nivel: 'aviso' as const,
+      visible: manda,
+    },
+    sinFicha.length > 0 && {
+      clave: 'platos', titulo: `${sinFicha.length} plato(s) sin precio de venta`,
+      texto: 'Sin precio no se puede calcular el margen de la carta.',
+      accion: 'Abrir cocina', ruta: '/app/cocina', icono: AlertTriangle, nivel: 'aviso' as const,
+      visible: manda,
+    },
+  ].filter(Boolean) as {
+    clave: string; titulo: string; texto: string; accion: string; ruta: string
+    icono: typeof Package; nivel: 'alerta' | 'aviso'; visible: boolean
+  }[]).filter((a) => a.visible)
+
   const valorCamara = lista.reduce((s, p) => {
     const coste = p.precio_ultimo != null && p.factor && p.rendimiento
       ? p.precio_ultimo / (p.factor * p.rendimiento) : 0
     return s + coste * p.stock_actual
   }, 0)
-  const abiertos = (pedidos ?? []).filter((p) => p.estado !== 'recibido' && p.estado !== 'cancelado')
+
+  const nombre = ((sesion?.user.user_metadata?.nombre as string | undefined) ?? sesion?.user.email?.split('@')[0] ?? '').split(' ')[0]
 
   return (
-    <div className="flex flex-col gap-4">
-      <header className="flex flex-wrap items-end justify-between gap-2">
+    <div className="flex flex-col gap-5">
+      <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="font-titulo text-2xl font-semibold">{actual.local}</h1>
-          <p className="text-sm text-tinta-suave">
-            {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+          <h1 className="font-titulo text-2xl font-semibold">
+            {saludo()}{nombre ? `, ${nombre}` : ''}
+          </h1>
+          <p className="text-sm capitalize text-tinta-suave">
+            {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })} · {actual.local}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Insignia tono={conRed ? 'ok' : 'alerta'}>{conRed ? 'Con cobertura' : 'Sin cobertura'}</Insignia>
+          {!conRed && <Insignia tono="alerta">Sin cobertura</Insignia>}
           {enCola > 0 && <Insignia tono="aviso">{enCola} sin subir</Insignia>}
         </div>
       </header>
 
-      {isLoading ? <Cargando texto="Leyendo tus números" /> : (
+      {manda ? (
+        <button
+          onClick={() => setConfirmar(jornada && !jornada.cerrada_en ? 'cerrar' : 'abrir')}
+          disabled={Boolean(jornada?.cerrada_en)}
+          className={[
+            'flex w-full items-center justify-between gap-3 rounded-xl px-5 py-4 text-left font-semibold text-white shadow-tarjeta transition-transform active:scale-[0.99]',
+            jornada?.cerrada_en ? 'bg-tinta-tenue' : jornada ? 'bg-alerta' : 'bg-ok',
+          ].join(' ')}
+        >
+          <span className="flex items-center gap-3">
+            {jornada && !jornada.cerrada_en
+              ? <DoorClosed className="size-6" aria-hidden />
+              : <DoorOpen className="size-6" aria-hidden />}
+            <span>
+              <span className="block text-base">
+                {jornada?.cerrada_en ? 'Día cerrado' : jornada ? 'Cerrar la caja' : 'Abrir el restaurante'}
+              </span>
+              <span className="block text-xs font-medium opacity-80">
+                {jornada?.cerrada_en
+                  ? `${euros(jornada.ventas_total)} · ${jornada.tickets ?? 0} tickets`
+                  : jornada
+                    ? `Abierto desde las ${new Date(jornada.abierta_en).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`
+                    : 'Empieza la jornada y comienza a contar el día'}
+              </span>
+            </span>
+          </span>
+          {!jornada?.cerrada_en && <ChevronRight className="size-5" aria-hidden />}
+        </button>
+      ) : (
+        <Link to="/app/equipo"
+          className="flex w-full items-center justify-between gap-3 rounded-xl bg-tinta px-5 py-4 font-semibold text-white shadow-tarjeta">
+          <span className="flex items-center gap-3">
+            <Timer className="size-6" aria-hidden />
+            <span>
+              <span className="block text-base">Fichar</span>
+              <span className="block text-xs font-medium opacity-80">Entrada y salida del turno</span>
+            </span>
+          </span>
+          <ChevronRight className="size-5" aria-hidden />
+        </Link>
+      )}
+
+      {isLoading ? <Cargando texto="Mirando cómo va el día" /> : (
         <>
-          <section className="grid min-w-0 grid-cols-2 gap-3 lg:grid-cols-4">
-            <Cifra etiqueta="Valor en cámara" valor={euros(valorCamara)} origen="Suma del coste real de lo que hay" />
-            <Cifra etiqueta="Referencias" valor={String(lista.length)} origen="Productos activos en despensa" />
-            <Cifra etiqueta="Bajo mínimo" valor={String(bajoMinimo.length)} origen="Por debajo del mínimo fijado"
-              tendencia={bajoMinimo.length ? 'baja' : 'igual'} />
-            <Cifra etiqueta="Pedidos abiertos" valor={String(abiertos.length)} origen="En borrador o enviados" />
+          <section>
+            <h2 className="mb-2 flex items-center gap-2 font-titulo text-sm font-semibold uppercase tracking-wide">
+              {atencion.length > 0 && <span className="size-2 rounded-full bg-alerta" />}
+              {atencion.length === 0
+                ? 'Todo en orden'
+                : `${atencion.length} ${atencion.length === 1 ? 'cosa necesita' : 'cosas necesitan'} atención`}
+            </h2>
+
+            {atencion.length === 0 ? (
+              <p className="rounded-xl border border-borde bg-lienzo p-4 text-sm text-tinta-suave">
+                No hay nada pendiente ahora mismo. Cuando algo se salga de lo normal, aparecerá aquí.
+              </p>
+            ) : (
+              <ul className="flex flex-col gap-2">
+                {atencion.map((a) => (
+                  <li key={a.clave}>
+                    <Link to={a.ruta}
+                      className="flex items-center gap-3 rounded-xl border border-borde bg-lienzo p-4 shadow-tarjeta transition-colors hover:border-naranja">
+                      <span className={`grid size-10 shrink-0 place-items-center rounded-lg ${
+                        a.nivel === 'alerta' ? 'bg-alerta-suave text-alerta' : 'bg-aviso-suave text-aviso'}`}>
+                        <a.icono className="size-5" aria-hidden />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-semibold">{a.titulo}</span>
+                        <span className="block truncate text-sm text-tinta-suave">{a.texto}</span>
+                      </span>
+                      <span className="hidden shrink-0 text-sm font-semibold text-naranja-oscuro sm:block">{a.accion}</span>
+                      <ChevronRight className="size-5 shrink-0 text-tinta-tenue" aria-hidden />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
 
-          <div className="grid gap-4 lg:grid-cols-2">
-            <Tarjeta titulo="Hoy hay que hacer" resumen={`${bajoMinimo.length + sinPrecio.length} cosas`}>
-              {bajoMinimo.length === 0 && sinPrecio.length === 0 ? (
-                <p className="text-sm text-tinta-suave">Nada pendiente. Buena señal.</p>
-              ) : (
-                <ul className="flex flex-col gap-2">
-                  {bajoMinimo.slice(0, 4).map((p) => (
-                    <li key={p.id} className="flex items-center justify-between gap-3 rounded-lg border border-borde px-3 py-2 text-sm">
-                      <span>
-                        <strong>{p.nombre}</strong> bajo mínimo
-                        <span className="block text-xs text-tinta-tenue">
-                          quedan {cantidad(p.stock_actual, p.unidad_uso)} de {cantidad(p.minimo ?? 0, p.unidad_uso)}
-                        </span>
-                      </span>
-                      <Link to="/app/despensa"><Boton tamano="pequeno" tono="discreto">Pedir</Boton></Link>
-                    </li>
-                  ))}
-                  {sinPrecio.length > 0 && (
-                    <li className="flex items-center justify-between gap-3 rounded-lg border border-borde px-3 py-2 text-sm">
-                      <span>
-                        <strong>{sinPrecio.length} producto(s) sin precio</strong>
-                        <span className="block text-xs text-tinta-tenue">cuentan cero en los escandallos</span>
-                      </span>
-                      <Link to="/app/despensa"><Boton tamano="pequeno" tono="discreto">Ver</Boton></Link>
-                    </li>
-                  )}
-                </ul>
-              )}
-            </Tarjeta>
+          {manda && (
+            <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              {[
+                ['Ventas de hoy', euros(jornada?.ventas_total ?? 0), 'Jornada en curso'],
+                ['Valor en cámara', euros(valorCamara), 'Al coste real de lo que hay'],
+                ['Referencias', String(lista.length), 'Productos dados de alta'],
+                ['Platos con ficha', String((platos ?? []).length), 'En el recetario'],
+              ].map(([t, v, o]) => (
+                <div key={t} className="rounded-xl border border-borde bg-lienzo p-4">
+                  <p className="text-xs font-semibold uppercase leading-tight tracking-wide text-tinta-tenue">{t}</p>
+                  <p className="cifras mt-1 font-titulo text-2xl font-semibold">{v}</p>
+                  <p className="mt-0.5 text-[11px] leading-tight text-tinta-tenue">{o}</p>
+                </div>
+              ))}
+            </section>
+          )}
 
-            <Tarjeta titulo="Accesos rápidos">
-              <div className="grid grid-cols-2 gap-2">
-                <Link to="/app/despensa"><Boton ancho tono="discreto"><ScanLine className="size-4" aria-hidden /> Escanear albarán</Boton></Link>
-                <Link to="/app/despensa"><Boton ancho tono="discreto"><ShoppingCart className="size-4" aria-hidden /> Nuevo pedido</Boton></Link>
-                <Link to="/app/servicio"><Boton ancho tono="discreto"><Trash2 className="size-4" aria-hidden /> Apuntar merma</Boton></Link>
-                <Link to="/app/servicio"><Boton ancho tono="discreto">Cerrar caja <ArrowRight className="size-4" aria-hidden /></Boton></Link>
+          <section className="rounded-xl border border-borde bg-tinta p-4 text-white">
+            <div className="flex items-center gap-3">
+              <CaraFogon className="size-10" />
+              <div className="min-w-0 flex-1">
+                <p className="font-titulo text-sm font-semibold uppercase tracking-wide">¿Qué quieres hacer?</p>
+                <p className="text-sm text-white/60">Pregúntale a Fogón lo que necesites del negocio.</p>
               </div>
-              <p className="mt-3 text-xs text-tinta-tenue">
-                Escanear albarán llegará con la lectura por foto; el resto ya funciona.
-              </p>
-            </Tarjeta>
-          </div>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {(manda
+                ? ['¿Qué me está costando dinero?', '¿Qué platos van flojos?', '¿Qué pido hoy?']
+                : ['¿Qué tengo que sacar hoy?', '¿Qué caduca esta semana?']
+              ).map((s) => (
+                <span key={s} className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm">{s}</span>
+              ))}
+            </div>
+          </section>
         </>
+      )}
+
+      <button
+        onClick={() => setAcciones(true)}
+        aria-label="Acción rápida"
+        className="fixed bottom-24 right-4 z-30 flex items-center gap-2 rounded-full bg-naranja px-5 py-3 font-semibold text-white shadow-flotante lg:bottom-8"
+      >
+        <Plus className="size-5" aria-hidden /> Acción rápida
+      </button>
+
+      {acciones && (
+        <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Acción rápida">
+          <button aria-label="Cerrar" onClick={() => setAcciones(false)}
+            className="absolute inset-0 animate-aparecer bg-tinta/60 backdrop-blur-sm" />
+          <div className="absolute inset-x-0 bottom-0 z-10 mx-auto max-w-md p-4 pb-24">
+            <p className="mb-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-white/70">
+              Acción rápida
+            </p>
+            <ul className="flex flex-col gap-2">
+              {accionesDeRol(rol).map((a, i) => (
+                <li key={a.clave} style={{ animationDelay: `${i * 40}ms` }} className="animate-subirCorto">
+                  <Link to={a.ruta} onClick={() => setAcciones(false)}
+                    className="flex items-center gap-3 rounded-xl bg-lienzo p-3.5 font-semibold shadow-tarjeta active:bg-panel">
+                    <a.icono className="size-5 text-naranja" aria-hidden />
+                    <span className="flex-1">{a.texto}</span>
+                    {a.pronto && <Insignia>pronto</Insignia>}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <button onClick={() => setAcciones(false)}
+              className="mx-auto mt-4 grid size-14 place-items-center rounded-full bg-lienzo shadow-flotante">
+              <X className="size-6" aria-hidden />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {confirmar && (
+        <div className="fixed inset-0 z-50 grid place-items-center p-4" role="dialog" aria-modal="true">
+          <button aria-label="Cerrar" onClick={() => setConfirmar(null)}
+            className="absolute inset-0 bg-tinta/60 backdrop-blur-sm" />
+          <div className="relative z-10 w-full max-w-sm animate-subirCorto rounded-xl bg-lienzo p-5 shadow-hoja">
+            <h2 className="font-titulo text-lg font-semibold">
+              {confirmar === 'abrir' ? '¿Abrimos el restaurante?' : '¿Cerramos la caja?'}
+            </h2>
+            <p className="mt-1 text-sm text-tinta-suave">
+              {confirmar === 'abrir'
+                ? 'Empieza la jornada de hoy. A partir de ahora se registran ventas, mermas y controles.'
+                : 'Se guarda la jornada con su fecha y ya no se registran más ventas de hoy.'}
+            </p>
+
+            {confirmar === 'cerrar' && (
+              <div className="mt-4">
+                <label className="block text-xs font-semibold uppercase tracking-wide text-tinta-suave">
+                  Total del día (€)
+                </label>
+                <input
+                  className="mt-1.5 h-11 w-full rounded-md border border-borde px-3 text-sm"
+                  inputMode="decimal" placeholder="1284,50"
+                  value={totalCierre} onChange={(e) => setTotalCierre(e.target.value)}
+                />
+                {appccPendiente.length > 0 && (
+                  <p className="mt-2 text-xs font-semibold text-aviso">
+                    Quedan {appccPendiente.length} controles de APPCC sin registrar.
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div className="mt-5 flex justify-end gap-2">
+              <Boton tono="discreto" onClick={() => setConfirmar(null)}>Cancelar</Boton>
+              <Boton
+                cargando={abrir.isPending || cerrar.isPending}
+                onClick={async () => {
+                  if (confirmar === 'abrir') await abrir.mutateAsync()
+                  else if (jornada) {
+                    await cerrar.mutateAsync({
+                      jornada,
+                      total: Number((totalCierre || '0').replace(',', '.')),
+                      tickets: null,
+                      origen: 'total_dia',
+                    })
+                  }
+                  setConfirmar(null); setTotalCierre('')
+                }}
+              >{confirmar === 'abrir' ? 'Abrir' : 'Cerrar caja'}</Boton>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
