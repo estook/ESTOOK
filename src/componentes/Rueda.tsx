@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BarChart3, Boxes, CalendarClock, ChefHat, ClipboardCheck, MessageSquare, Star, Store, X } from 'lucide-react'
+import { BarChart3, Boxes, CalendarClock, ChefHat, ClipboardCheck, FileText, MessageSquare, Star, Store, X } from 'lucide-react'
 
 export interface AppEstook {
   clave: string
@@ -18,6 +18,7 @@ export const APPS: AppEstook[] = [
   { clave: 'negocio', nombre: 'Negocio', dentro: 'Resúmenes · Costes · TPV · Auditoría', ruta: '/app/negocio', icono: BarChart3 },
   { clave: 'competencia', nombre: 'Competencia', dentro: 'Quién tienes al lado y a cuánto cobra', ruta: '/app/competencia', icono: Store },
   { clave: 'resenas', nombre: 'Reseñas', dentro: 'Lo que dicen tus clientes, ordenado', ruta: '/app/resenas', icono: Star },
+  { clave: 'documentos', nombre: 'Documentos', dentro: 'Todo lo que has generado, con su fecha', ruta: '/app/documentos', icono: FileText },
   { clave: 'chat', nombre: 'Chat', dentro: 'El equipo, con constancia de quién lo ha leído', ruta: '/app/chat', icono: MessageSquare },
 ]
 

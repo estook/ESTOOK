@@ -7,6 +7,7 @@ import { Tabla, type Columna } from '@/componentes/Tabla'
 import { Aviso, Cargando, Insignia, Vacio } from '@/componentes/Estado'
 import { Tarjeta } from '@/componentes/Tarjeta'
 import { useSesion } from '@/app/sesion'
+import { usePermisos } from '@/app/permisos'
 import {
   costeUnidadUso, euros,
   useAjustarStock, useGuardarProducto, useGuardarProveedor,
@@ -61,6 +62,9 @@ export function Inventario() {
 // ============================ PRODUCTOS ============================
 
 function Productos({ localId }: { localId?: string }) {
+  const { puedeVer, puedeEditar } = usePermisos()
+  const conPrecios = puedeVer('inventario.precios')
+  const puedeCrear = puedeEditar('inventario.productos')
   const { data: productos, isLoading, error } = useProductos(localId)
   const { data: proveedores } = useProveedores(localId)
   const guardar = useGuardarProducto(localId)
@@ -95,12 +99,12 @@ function Productos({ localId }: { localId?: string }) {
     { clave: 'categoria', titulo: 'Categoría', principal: false, celda: (p) => p.categoria ?? '—' },
     { clave: 'stock', titulo: 'En cámara', alineada: 'derecha',
       celda: (p) => mostrar(p.stock_actual, p.unidad_uso as 'g' | 'ml' | 'ud') },
-    { clave: 'coste', titulo: 'Coste útil', alineada: 'derecha', celda: (p) => {
+    ...(!conPrecios ? [] : [{ clave: 'coste', titulo: 'Coste útil', alineada: 'derecha' as const, celda: (p: Producto) => {
       const c = costeUnidadUso(p)
       if (c == null) return '—'
       const grande = GRANDE[p.unidad_uso as 'g' | 'ml' | 'ud']
       return `${euros(aPequena(c, p.unidad_uso as 'g' | 'ml' | 'ud'))}/${grande}`
-    } },
+    } }]),
   ]
 
   async function corregirStock() {
@@ -127,7 +131,7 @@ function Productos({ localId }: { localId?: string }) {
               {bajoMinimo.length > 3 && ` y ${bajoMinimo.length - 3} más`}.
             </Aviso>
           )}
-          {sinPrecio.length > 0 && (
+          {conPrecios && sinPrecio.length > 0 && (
             <Aviso nivel="informativo" titulo={`${sinPrecio.length} producto(s) sin precio`}>
               Se pueden usar igual, pero cuentan cero al calcular el coste de los platos.
             </Aviso>
@@ -148,22 +152,26 @@ function Productos({ localId }: { localId?: string }) {
         <BotonDocumento
           opciones={[
             {
-              clave: 'valorado', nombre: 'Inventario valorado',
+              clave: 'inventario_valorado', nombre: 'Inventario valorado',
               descripcion: 'Lo que hay en cámara y lo que vale, por categorías.',
               archivo: 'inventario-valorado',
               generar: (marca, quien) => inventarioValorado(marca, lista, { generadoPor: quien }),
+              datos: () => ({ productos: lista }),
             },
             {
-              clave: 'recuento', nombre: 'Hoja de recuento',
+              clave: 'hoja_recuento', nombre: 'Hoja de recuento',
               descripcion: 'Para imprimir y llevar a la cámara, con casillas en blanco.',
               archivo: 'hoja-de-recuento',
               generar: (marca, quien) => hojaDeRecuento(marca, lista, { generadoPor: quien }),
+              datos: () => ({ productos: lista }),
             },
           ]}
         />
-        <Boton onClick={() => setNuevo(true)} className="flex-1 sm:flex-none">
-          <Plus className="size-4" aria-hidden /> Nuevo producto
-        </Boton>
+        {puedeCrear && (
+          <Boton onClick={() => setNuevo(true)} className="flex-1 sm:flex-none">
+            <Plus className="size-4" aria-hidden /> Nuevo producto
+          </Boton>
+        )}
         </div>
       </div>
 

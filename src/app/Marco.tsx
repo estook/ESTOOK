@@ -5,6 +5,7 @@ import { Isotipo, CaraFogon } from '@/marca/Logo'
 import { Cargando, Insignia } from '@/componentes/Estado'
 import { APPS, Rueda } from '@/componentes/Rueda'
 import { useSesion } from '@/app/sesion'
+import { usePermisos, type Ambito } from '@/app/permisos'
 import { Fogon } from '@/componentes/Fogon'
 
 const NOMBRE_PLAN: Record<string, string> = {
@@ -16,6 +17,24 @@ export function Marco() {
   const [rueda, setRueda] = useState(false)
   const [fogon, setFogon] = useState(false)
   const { pathname } = useLocation()
+  const { puedeVer } = usePermisos()
+
+  /** Cada app pide un permiso; si el rol no lo tiene, no aparece. */
+  const AMBITO_DE_APP: Record<string, Ambito> = {
+    inventario: 'inventario.productos',
+    cocina: 'cocina.fichas',
+    servicio: 'servicio.appcc',
+    equipo: 'equipo.horarios',
+    negocio: 'negocio.resumenes',
+    documentos: 'cocina.fichas',
+    competencia: 'negocio.resumenes',
+    resenas: 'negocio.resumenes',
+    chat: 'equipo.fichajes',
+  }
+  const apps = APPS.filter((a) => {
+    const ambito = AMBITO_DE_APP[a.clave]
+    return !ambito || puedeVer(ambito)
+  })
 
   if (cargando) return <div className="grid min-h-full place-items-center"><Cargando texto="Abriendo tu local" /></div>
   if (!sesion) return <Navigate to="/entrar" replace />
@@ -52,7 +71,7 @@ export function Marco() {
               `rounded-md px-3 py-2 text-sm font-semibold ${isActive ? 'bg-naranja-suave text-naranja-oscuro' : 'text-tinta-suave hover:bg-panel'}`}>
               Panel
             </NavLink>
-            {APPS.map((a) => (
+            {apps.map((a) => (
               <NavLink key={a.clave} to={a.ruta} className={({ isActive }) =>
                 `rounded-md px-3 py-2 text-sm font-semibold ${isActive ? 'bg-naranja-suave text-naranja-oscuro' : 'text-tinta-suave hover:bg-panel'}`}>
                 {a.nombre}
@@ -106,7 +125,7 @@ export function Marco() {
         </div>
       </nav>
 
-      <Rueda abierta={rueda} apps={APPS} onCerrar={() => setRueda(false)} />
+      <Rueda abierta={rueda} apps={apps} onCerrar={() => setRueda(false)} />
       <Fogon abierto={fogon} onCerrar={() => setFogon(false)} pantalla={pathname} />
     </div>
   )

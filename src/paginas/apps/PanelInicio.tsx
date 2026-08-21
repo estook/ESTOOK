@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  AlertTriangle, Camera, ChevronRight, ClipboardCheck, DoorClosed, DoorOpen,
+  Camera, ChevronRight, ClipboardCheck, DoorClosed, DoorOpen,
   Package, Plus, Receipt, ShoppingCart, Timer, Trash2, X,
 } from 'lucide-react'
 import { Boton } from '@/componentes/Boton'
@@ -15,6 +15,10 @@ import {
   useAbrirJornada, useCerrarJornada, useJornadaDeHoy, usePlanAppcc, useRegistrosDeHoy,
 } from '@/datos/servicio'
 import { useCola } from '@/offline/useCola'
+import { usePermisos } from '@/app/permisos'
+import {
+  calcularAvisos, useAvisos, useResponderAviso, useSincronizarAvisos,
+} from '@/datos/avisos'
 
 const MANDA = ['gerente', 'jefe_cocina', 'jefe_sala']
 
@@ -51,6 +55,11 @@ export function PanelInicio() {
   const cerrar = useCerrarJornada(actual?.local_id)
   const { conRed, enCola } = useCola()
 
+  const { puedeVer } = usePermisos()
+  const { data: avisos } = useAvisos(actual?.local_id, rol)
+  const sincronizar = useSincronizarAvisos(actual?.local_id)
+  const responder = useResponderAviso(actual?.local_id)
+
   const [acciones, setAcciones] = useState(false)
   const [confirmar, setConfirmar] = useState<'abrir' | 'cerrar' | null>(null)
   const [totalCierre, setTotalCierre] = useState('')
@@ -65,47 +74,30 @@ export function PanelInicio() {
   }
 
   const lista = productos ?? []
-  const bajoMinimo = lista.filter((p) => p.minimo != null && p.stock_actual < p.minimo)
-  const sinPrecio = lista.filter((p) => p.precio_ultimo == null)
-  const pedidosAbiertos = (pedidos ?? []).filter((p) => p.estado === 'borrador' || p.estado === 'enviado')
-  const appccPendiente = (plan?.puntos ?? []).filter((p) => !(registros ?? []).some((r) => r.punto_id === p.id))
-  const sinFicha = (platos ?? []).filter((p) => p.precio_venta == null)
 
-  const atencion = ([
-    bajoMinimo.length > 0 && {
-      clave: 'stock', titulo: 'Género bajo mínimo',
-      texto: `${bajoMinimo.slice(0, 3).map((p) => p.nombre).join(', ')}${bajoMinimo.length > 3 ? ` y ${bajoMinimo.length - 3} más` : ''}.`,
-      accion: 'Montar el pedido', ruta: '/app/inventario', icono: Package, nivel: 'alerta' as const,
-      visible: manda || rol === 'cocinero',
-    },
-    appccPendiente.length > 0 && {
-      clave: 'appcc', titulo: `Faltan ${appccPendiente.length} controles de APPCC`,
-      texto: appccPendiente.slice(0, 3).map((p) => p.nombre).join(', ') + '.',
-      accion: 'Registrar ahora', ruta: '/app/servicio', icono: ClipboardCheck, nivel: 'aviso' as const,
-      visible: true,
-    },
-    pedidosAbiertos.length > 0 && {
-      clave: 'pedidos', titulo: `${pedidosAbiertos.length} pedido(s) sin recibir`,
-      texto: 'Cuando llegue el género, recíbelo para que suba el stock.',
-      accion: 'Ver pedidos', ruta: '/app/inventario', icono: ShoppingCart, nivel: 'aviso' as const,
-      visible: manda,
-    },
-    sinPrecio.length > 0 && {
-      clave: 'precios', titulo: `${sinPrecio.length} producto(s) sin precio`,
-      texto: 'Sin precio, los platos que los llevan salen con el margen falseado.',
-      accion: 'Poner precios', ruta: '/app/inventario', icono: Receipt, nivel: 'aviso' as const,
-      visible: manda,
-    },
-    sinFicha.length > 0 && {
-      clave: 'platos', titulo: `${sinFicha.length} plato(s) sin precio de venta`,
-      texto: 'Sin precio no se puede calcular el margen de la carta.',
-      accion: 'Abrir cocina', ruta: '/app/cocina', icono: AlertTriangle, nivel: 'aviso' as const,
-      visible: manda,
-    },
-  ].filter(Boolean) as {
-    clave: string; titulo: string; texto: string; accion: string; ruta: string
-    icono: typeof Package; nivel: 'alerta' | 'aviso'; visible: boolean
-  }[]).filter((a) => a.visible)
+  useEffect(() => {
+    if (!actual?.local_id || isLoading) return
+    const calculados = calcularAvisos({
+      productos: productos ?? [],
+      platos: platos ?? [],
+      pedidos: pedidos ?? [],
+      puntosAppcc: plan?.puntos ?? [],
+      registrosAppcc: registros ?? [],
+      jornadaAbierta: Boolean(jornada),
+      jornadaCerrada: Boolean(jornada?.cerrada_en),
+    })
+    sincronizar.mutate(calculados)
+    // Se recalcula cuando cambian los datos, no en cada pintado
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actual?.local_id, isLoading, productos, platos, pedidos, plan, registros, jornada])
+  const appccPendiente = (plan?.puntos ?? []).filter((p) => !(registros ?? []).some((r) => r.punto_id === p.id))
+
+  const tarjetas = (avisos ?? []).filter((a) => !a.app || puedeVer(
+    a.app === 'inventario' ? 'inventario.productos'
+    : a.app === 'cocina' ? 'cocina.fichas'
+    : a.app === 'servicio' ? 'servicio.appcc'
+    : 'inventario.productos',
+  ))
 
   const valorCamara = lista.reduce((s, p) => {
     const coste = p.precio_ultimo != null && p.factor && p.rendimiento
@@ -180,33 +172,52 @@ export function PanelInicio() {
         <>
           <section>
             <h2 className="mb-2 flex items-center gap-2 font-titulo text-sm font-semibold uppercase tracking-wide">
-              {atencion.length > 0 && <span className="size-2 rounded-full bg-alerta" />}
-              {atencion.length === 0
+              {tarjetas.length > 0 && <span className="size-2 rounded-full bg-alerta" />}
+              {tarjetas.length === 0
                 ? 'Todo en orden'
-                : `${atencion.length} ${atencion.length === 1 ? 'cosa necesita' : 'cosas necesitan'} atención`}
+                : `${tarjetas.length} ${tarjetas.length === 1 ? 'cosa necesita' : 'cosas necesitan'} atención`}
             </h2>
 
-            {atencion.length === 0 ? (
+            {tarjetas.length === 0 ? (
               <p className="rounded-xl border border-borde bg-lienzo p-4 text-sm text-tinta-suave">
                 No hay nada pendiente ahora mismo. Cuando algo se salga de lo normal, aparecerá aquí.
               </p>
             ) : (
               <ul className="flex flex-col gap-2">
-                {atencion.map((a) => (
-                  <li key={a.clave}>
-                    <Link to={a.ruta}
-                      className="flex items-center gap-3 rounded-xl border border-borde bg-lienzo p-4 shadow-tarjeta transition-colors hover:border-naranja">
-                      <span className={`grid size-10 shrink-0 place-items-center rounded-lg ${
-                        a.nivel === 'alerta' ? 'bg-alerta-suave text-alerta' : 'bg-aviso-suave text-aviso'}`}>
-                        <a.icono className="size-5" aria-hidden />
+                {tarjetas.map((a) => (
+                  <li key={a.id}
+                    className="rounded-xl border border-borde bg-lienzo p-4 shadow-tarjeta">
+                    <div className="flex items-start gap-3">
+                      <span className={`mt-0.5 grid size-9 shrink-0 place-items-center rounded-lg ${
+                        a.nivel === 'urgente' ? 'bg-alerta-suave text-alerta'
+                        : a.nivel === 'importante' ? 'bg-aviso-suave text-aviso'
+                        : 'bg-panel text-tinta-tenue'}`}>
+                        <CaraFogon className="size-6" />
                       </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block font-semibold">{a.titulo}</span>
-                        <span className="block truncate text-sm text-tinta-suave">{a.texto}</span>
-                      </span>
-                      <span className="hidden shrink-0 text-sm font-semibold text-naranja-oscuro sm:block">{a.accion}</span>
-                      <ChevronRight className="size-5 shrink-0 text-tinta-tenue" aria-hidden />
-                    </Link>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold leading-tight">{a.titulo}</p>
+                        {a.cuerpo && <p className="mt-1 text-sm text-tinta-suave">{a.cuerpo}</p>}
+                      </div>
+                      <button
+                        aria-label="Cerrar aviso"
+                        onClick={() => responder.mutate({ id: a.id, respuesta: 'cerrado' })}
+                        className="grid size-8 shrink-0 place-items-center rounded-md text-tinta-tenue hover:bg-panel"
+                      >
+                        <X className="size-4" aria-hidden />
+                      </button>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {a.accion_ruta && a.accion_texto && (
+                        <Link to={a.accion_ruta}
+                          onClick={() => responder.mutate({ id: a.id, respuesta: 'aplicado' })}>
+                          <Boton tamano="pequeno">{a.accion_texto}</Boton>
+                        </Link>
+                      )}
+                      <Boton tamano="pequeno" tono="discreto"
+                        onClick={() => responder.mutate({ id: a.id, respuesta: 'ahora_no' })}>
+                        Ahora no
+                      </Boton>
+                    </div>
                   </li>
                 ))}
               </ul>

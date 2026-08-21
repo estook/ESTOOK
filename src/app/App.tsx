@@ -9,6 +9,7 @@ import { PanelInicio } from '@/paginas/apps/PanelInicio'
 import { Inventario } from '@/paginas/apps/Despensa'
 import { Chat, Competencia, Equipo, Negocio, Resenas } from '@/paginas/apps/Otras'
 import { Ajustes } from '@/paginas/apps/Ajustes'
+import { Documentos } from '@/paginas/apps/Documentos'
 import { Servicio } from '@/paginas/apps/Servicio'
 import { Cocina } from '@/paginas/apps/Cocina'
 
@@ -29,6 +30,7 @@ export function App() {
             <Route path="competencia" element={<Competencia />} />
             <Route path="resenas" element={<Resenas />} />
             <Route path="chat" element={<Chat />} />
+            <Route path="documentos" element={<Documentos />} />
             <Route path="ajustes" element={<Ajustes />} />
           </Route>
           <Route path="/admin" element={<Admin />} />

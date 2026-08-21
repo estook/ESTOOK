@@ -6,6 +6,7 @@ import { Aviso } from '@/componentes/Estado'
 import { useSesion } from '@/app/sesion'
 import { useLocal } from '@/datos/local'
 import { compartir, descargar, imprimir, type Documento, type Marca } from '@/documentos/motor'
+import { useGuardarDocumento } from '@/documentos/historial'
 
 const COLORES = [
   { nombre: 'Naranja Estook', hex: '#FF7A00' },
@@ -22,6 +23,14 @@ export interface OpcionDocumento {
   descripcion: string
   archivo: string
   generar: (marca: Marca, generadoPor?: string) => Promise<Documento>
+  /**
+   * Copia de los datos con los que se hizo el documento. Es lo que permite
+   * volver a sacarlo idéntico dentro de un año. Si no se pasa, el documento se
+   * genera igual pero no queda en el historial.
+   */
+  datos?: () => unknown
+  valorLegal?: boolean
+  periodo?: { desde?: string; hasta?: string }
 }
 
 /**
@@ -57,6 +66,7 @@ function HojaDocumento({
 }) {
   const { actual, sesion } = useSesion()
   const { data: local } = useLocal(actual?.local_id)
+  const guardarEnHistorial = useGuardarDocumento(actual?.local_id)
 
   const [elegido, setElegido] = useState(0)
   const [modoColor, setModoColor] = useState<'marca' | 'otro'>('marca')
@@ -86,6 +96,23 @@ function HojaDocumento({
       if (que === 'descargar') descargar(doc, opcion.archivo)
       else if (que === 'imprimir') imprimir(doc)
       else await compartir(doc, opcion.archivo)
+
+      // Queda en el historial con copia de sus datos, para poder repetirlo tal cual
+      if (opcion.datos) {
+        try {
+          await guardarEnHistorial.mutateAsync({
+            tipo: opcion.clave,
+            titulo: opcion.nombre,
+            plantilla: opcion.clave,
+            datos: opcion.datos(),
+            color,
+            archivo: opcion.archivo,
+            valorLegal: opcion.valorLegal,
+            periodo: opcion.periodo,
+          })
+        } catch { /* que no se pierda el PDF por un fallo al guardar la ficha */ }
+      }
+
       if (que !== 'imprimir') onCerrar()
     } catch (e) {
       console.error(e)

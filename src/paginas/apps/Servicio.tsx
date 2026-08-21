@@ -97,7 +97,7 @@ function Jornada({ localId }: { localId?: string }) {
                   pequeno
                   etiqueta="PDF del día"
                   opciones={[{
-                    clave: 'resumen', nombre: 'Resumen del día',
+                    clave: 'resumen_dia', nombre: 'Resumen del día',
                     descripcion: 'Ventas, tickets, mermas y lo que quedó pendiente.',
                     archivo: `resumen-${jornada.fecha}`,
                     generar: (marca, quien) => resumenDelDia(marca, {
@@ -109,6 +109,12 @@ function Jornada({ localId }: { localId?: string }) {
                       appccPendientes: pendientesAppcc.length,
                       bajoMinimo: [],
                     }, { generadoPor: quien }),
+                    datos: () => ({
+                      dia: jornada.fecha, ventas: jornada.ventas_total, tickets: jornada.tickets,
+                      origen: jornada.origen, mermas: [], appccPendientes: pendientesAppcc.length,
+                      bajoMinimo: [],
+                    }),
+                    periodo: { desde: jornada.fecha, hasta: jornada.fecha },
                   }]}
                 />
                 {jornada.cerrada_en
@@ -258,11 +264,14 @@ function Appcc({ localId }: { localId?: string }) {
         </p>
         <BotonDocumento
           opciones={[{
-            clave: 'parte', nombre: 'Parte de APPCC de hoy',
+            clave: 'appcc', nombre: 'Parte de APPCC de hoy',
             descripcion: 'El que mira el inspector: puntos, límites, valores y firmas.',
             archivo: `appcc-${fechaOperativa()}`,
             generar: (marca, quien) =>
               parteAppcc(marca, fechaOperativa(), data.puntos, registros ?? [], { generadoPor: quien }),
+            datos: () => ({ dia: fechaOperativa(), puntos: data.puntos, registros: registros ?? [] }),
+            valorLegal: true,
+            periodo: { desde: fechaOperativa(), hasta: fechaOperativa() },
           }]}
         />
       </div>

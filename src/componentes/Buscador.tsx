@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowRight, BarChart3, Boxes, CalendarClock, ChefHat, ClipboardCheck,
-  MessageSquare, Search, Settings, Star, Store, X,
+  FileText, MessageSquare, Search, Settings, Star, Store, X,
 } from 'lucide-react'
 
 /**
@@ -41,8 +41,10 @@ const APARTADOS: Entrada[] = [
     palabras: ['opiniones', 'google', 'valoraciones', 'clientes'] },
   { clave: 'chat', titulo: 'Chat', categoria: 'Apartado', ruta: '/app/chat', icono: MessageSquare,
     palabras: ['mensajes', 'equipo', 'avisos'] },
+  { clave: 'documentos', titulo: 'Documentos', categoria: 'Apartado', ruta: '/app/documentos', icono: FileText,
+    palabras: ['pdf', 'papeles', 'historial', 'imprimir', 'generar', 'informes'] },
   { clave: 'ajustes', titulo: 'Ajustes', categoria: 'Apartado', ruta: '/app/ajustes', icono: Settings,
-    palabras: ['configuracion', 'logo', 'color', 'marca', 'plan', 'facturacion', 'perfil'] },
+    palabras: ['configuracion', 'logo', 'color', 'marca', 'plan', 'facturacion', 'perfil', 'notas'] },
 ]
 
 const ACCIONES: Entrada[] = [

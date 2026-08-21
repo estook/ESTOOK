@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import {
-  Building2, Check, ChevronDown, CreditCard, ImagePlus, KeyRound,
+  Building2, Check, ChevronDown, CreditCard, History, ImagePlus, KeyRound,
   LogOut, Palette, StickyNote, Target, Trash2,
 } from 'lucide-react'
 import { Boton } from '@/componentes/Boton'
@@ -9,6 +9,8 @@ import { Aviso, Cargando, Insignia } from '@/componentes/Estado'
 import { useSesion } from '@/app/sesion'
 import { leerLogoComoBase64, useGuardarLocal, useLocal, type Local } from '@/datos/local'
 import { useGuardarNota, useNotas, useBorrarNota } from '@/datos/notas'
+import { useAuditoria } from '@/datos/auditoria'
+import { usePermisos } from '@/app/permisos'
 
 const COLORES = [
   { nombre: 'Naranja Estook', hex: '#FF7A00' },
@@ -79,6 +81,8 @@ export function Ajustes() {
       <MarcaDelLocal local={local} />
       <Objetivos local={local} />
       <Notas localId={local.id} />
+
+      <Actividad localId={local.id} />
 
       <Bloque icono={<CreditCard className="size-5" aria-hidden />} titulo="Plan y facturación"
         resumen={NOMBRE_PLAN[actual.plan] ?? actual.plan}>
@@ -391,6 +395,46 @@ function Notas({ localId }: { localId: string }) {
           {(notas ?? []).length === 0 && (
             <li className="rounded-lg border border-dashed border-borde p-4 text-center text-sm text-tinta-tenue">
               Todavía no hay ninguna nota.
+            </li>
+          )}
+        </ul>
+      )}
+    </Bloque>
+  )
+}
+
+// ---------- Actividad (auditoría) ----------
+
+function Actividad({ localId }: { localId: string }) {
+  const { puedeVer } = usePermisos()
+  const { data: registros, isLoading } = useAuditoria(localId)
+  if (!puedeVer('negocio.auditoria')) return null
+
+  return (
+    <Bloque icono={<History className="size-5" aria-hidden />} titulo="Actividad del local"
+      resumen="Quién ha tocado qué y cuándo">
+      <p className="text-sm text-tinta-suave">
+        Todo lo que toca dinero, permisos o registros legales queda aquí. No se puede editar ni
+        borrar: es el respaldo cuando algo no cuadra.
+      </p>
+      {isLoading ? <Cargando /> : (
+        <ul className="mt-3 flex flex-col gap-1.5">
+          {(registros ?? []).map((r) => (
+            <li key={r.id} className="flex items-start gap-2 rounded-lg border border-borde bg-panel px-3 py-2">
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm">{r.resumen ?? `${r.entidad} · ${r.accion}`}</span>
+                <span className="block text-[11px] text-tinta-tenue">
+                  {new Date(r.creado_en).toLocaleString('es-ES', {
+                    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+                  })}
+                  {r.de_fogon && ' · Fogón'}
+                </span>
+              </span>
+            </li>
+          ))}
+          {(registros ?? []).length === 0 && (
+            <li className="rounded-lg border border-dashed border-borde p-4 text-center text-sm text-tinta-tenue">
+              Todavía no hay actividad registrada.
             </li>
           )}
         </ul>

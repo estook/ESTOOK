@@ -189,18 +189,20 @@ function FichaAbierta({
             etiqueta="PDF"
             opciones={[
               {
-                clave: 'con', nombre: 'Ficha con costes',
+                clave: 'ficha_tecnica', nombre: 'Ficha con costes',
                 descripcion: 'Ingredientes, coste por línea, margen y precio. Para jefatura.',
                 archivo: `ficha-${plato.nombre}`,
                 generar: (marca, quien) =>
                   fichaTecnica(marca, plato, ingredientes ?? [], productos, { conCostes: true }, { generadoPor: quien }),
+                datos: () => ({ plato, ingredientes: ingredientes ?? [], productos }),
               },
               {
-                clave: 'sin', nombre: 'Ficha para cocina',
+                clave: 'ficha_cocina', nombre: 'Ficha para cocina',
                 descripcion: 'Gramajes y pasos, sin un solo importe. Para colgar en el pase.',
                 archivo: `ficha-cocina-${plato.nombre}`,
                 generar: (marca, quien) =>
                   fichaTecnica(marca, plato, ingredientes ?? [], productos, { conCostes: false }, { generadoPor: quien }),
+                datos: () => ({ plato, ingredientes: ingredientes ?? [], productos }),
               },
             ]}
           />
@@ -428,6 +430,19 @@ function Carta({ localId }: { localId?: string }) {
               })),
               { generadoPor: quien },
             ),
+            datos: () => ({
+              secciones: (secciones ?? []).map((s) => ({
+                nombre: s.nombre,
+                platos: s.carta_platos.slice().sort((a, b) => a.orden - b.orden).map((cp) => {
+                  const ficha = (platos ?? []).find((p) => p.id === cp.plato_id)
+                  return {
+                    nombre: ficha?.nombre ?? cp.nombre ?? 'Plato',
+                    descripcion: cp.descripcion ?? ficha?.descripcion ?? null,
+                    precio: cp.precio ?? ficha?.precio_venta ?? null,
+                  }
+                }),
+              })),
+            }),
           }]}
         />
       </div>
