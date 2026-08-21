@@ -24,7 +24,7 @@ const responder = (d: unknown, e = 200) =>
   new Response(JSON.stringify(d), { status: e, headers: { ...cabeceras, 'Content-Type': 'application/json' } })
 
 const clienteDeServicio = () =>
-  createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_KEY')!)
+  createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('CLAVE_SERVICIO')!)
 
 async function exigirMiembro(req: Request, localId: string) {
   const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {

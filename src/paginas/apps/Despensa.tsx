@@ -135,7 +135,7 @@ function Productos({ localId }: { localId?: string }) {
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <div className="relative min-w-0 flex-1">
           <Search className="pointer-events-none absolute left-3 top-3 size-5 text-tinta-tenue" aria-hidden />
           <input
@@ -144,6 +144,7 @@ function Productos({ localId }: { localId?: string }) {
             value={busca} onChange={(e) => setBusca(e.target.value)}
           />
         </div>
+        <div className="flex shrink-0 gap-2">
         <BotonDocumento
           opciones={[
             {
@@ -160,7 +161,10 @@ function Productos({ localId }: { localId?: string }) {
             },
           ]}
         />
-        <Boton onClick={() => setNuevo(true)}><Plus className="size-4" aria-hidden /> Nuevo producto</Boton>
+        <Boton onClick={() => setNuevo(true)} className="flex-1 sm:flex-none">
+          <Plus className="size-4" aria-hidden /> Nuevo producto
+        </Boton>
+        </div>
       </div>
 
       <Tabla

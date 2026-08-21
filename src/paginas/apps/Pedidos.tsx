@@ -7,16 +7,22 @@ import { Aviso, Cargando, Insignia, Vacio } from '@/componentes/Estado'
 import { exigirSupabase } from '@/datos/supabase'
 import {
   useCrearPedido, useMoverPedido, usePedidos, useProductos, useProveedores,
-  type Pedido,
+  type Pedido, type Producto,
 } from '@/datos/despensa'
 import { GRANDE, aGrande } from '@/datos/unidades'
 
 const ESTADOS = {
-  borrador: { texto: 'Sin enviar', tono: 'neutro' },
-  enviado: { texto: 'Enviado', tono: 'aviso' },
-  recibido: { texto: 'Recibido', tono: 'ok' },
+  borrador: { texto: 'Borrador', tono: 'neutro' },
+  enviado: { texto: 'En camino', tono: 'aviso' },
+  recibido: { texto: 'Entregado', tono: 'ok' },
   cancelado: { texto: 'Cancelado', tono: 'alerta' },
 } as const
+
+const PESTANAS = [
+  { clave: 'borrador', texto: 'Borradores' },
+  { clave: 'enviado', texto: 'En camino' },
+  { clave: 'recibido', texto: 'Entregados' },
+] as const
 
 const UNIDADES_PEDIDO = ['kg', 'l', 'ud', 'cajas', 'sacos', 'garrafas', 'bandejas', 'botellas']
 
@@ -68,6 +74,8 @@ export function Pedidos({ localId }: { localId?: string }) {
   const [recibiendo, setRecibiendo] = useState<string | null>(null)
   const [albaran, setAlbaran] = useState('')
   const [copiado, setCopiado] = useState(false)
+  const [pestana, setPestana] = useState<'borrador' | 'enviado' | 'recibido'>('borrador')
+  const [borradorId, setBorradorId] = useState<string | null>(null)
 
   if (isLoading) return <Cargando />
 
@@ -117,12 +125,25 @@ export function Pedidos({ localId }: { localId?: string }) {
     if (creado && estado === 'enviado') {
       await mover.mutateAsync({ pedido: creado, estado: 'enviado' })
     }
+    if (creado) setBorradorId(creado.id)
     return creado
   }
 
   function limpiar() {
     setNuevo(false); setLineas([{ ...LINEA_VACIA }]); setProveedorId('')
-    setFecha(''); setHora(''); setNotas('')
+    setFecha(''); setHora(''); setNotas(''); setBorradorId(null)
+  }
+
+  /**
+   * Nada se pierde: si cierras la hoja a medias, lo que llevabas escrito se
+   * guarda como borrador y lo retomas en su pestaña.
+   */
+  async function cerrarGuardando() {
+    const hayAlgo = proveedorId && lineas.some((l) => l.texto.trim())
+    if (hayAlgo && !borradorId) {
+      try { await guardar('borrador') } catch { /* si falla, no se pierde la pantalla */ }
+    }
+    limpiar()
   }
 
   return (
@@ -146,16 +167,44 @@ export function Pedidos({ localId }: { localId?: string }) {
         <Boton onClick={() => abrirNuevo()}><Plus className="size-4" aria-hidden /> Nuevo pedido</Boton>
       </div>
 
-      {(pedidos ?? []).length === 0 ? (
+      <nav className="flex gap-1 border-b border-borde">
+        {PESTANAS.map((p) => {
+          const cuantos = (pedidos ?? []).filter((x) => x.estado === p.clave).length
+          return (
+            <button key={p.clave} onClick={() => setPestana(p.clave)}
+              className={`-mb-px flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-semibold ${
+                pestana === p.clave ? 'border-naranja text-naranja-oscuro' : 'border-transparent text-tinta-suave'}`}>
+              {p.texto}
+              {cuantos > 0 && (
+                <span className={`rounded px-1.5 text-xs ${pestana === p.clave ? 'bg-naranja text-white' : 'bg-panel text-tinta-tenue'}`}>
+                  {cuantos}
+                </span>
+              )}
+            </button>
+          )
+        })}
+      </nav>
+
+      {(pedidos ?? []).filter((p) => p.estado === pestana).length === 0 ? (
         <Vacio
           icono={<ClipboardList className="size-8" aria-hidden />}
-          titulo="Ningún pedido todavía"
-          explicacion="Un pedido pasa por tres estados: sin enviar, enviado y recibido. Se manda por WhatsApp o copiado, y queda guardado con su fecha."
-          accion={<Boton onClick={() => abrirNuevo()}>Crear el primero</Boton>}
+          titulo={
+            pestana === 'borrador' ? 'No tienes borradores'
+            : pestana === 'enviado' ? 'No hay pedidos en camino'
+            : 'Todavía no has recibido ningún pedido'
+          }
+          explicacion={
+            pestana === 'borrador'
+              ? 'Lo que empieces y no envíes se guarda aquí, aunque cierres la ventana.'
+              : pestana === 'enviado'
+                ? 'Los pedidos que mandes al proveedor aparecen aquí hasta que llegan.'
+                : 'Al recibir un pedido, el género entra en el inventario y el pedido pasa aquí.'
+          }
+          accion={pestana === 'borrador' ? <Boton onClick={() => abrirNuevo()}>Crear el primero</Boton> : undefined}
         />
       ) : (
         <ul className="flex flex-col gap-2">
-          {(pedidos ?? []).map((p) => {
+          {(pedidos ?? []).filter((x) => x.estado === pestana).map((p) => {
             const e = ESTADOS[p.estado]
             const conFecha = p as Pedido & { fecha_entrega?: string | null; hora_entrega?: string | null; notas?: string | null }
             return (
@@ -228,9 +277,9 @@ export function Pedidos({ localId }: { localId?: string }) {
         abierta={nuevo}
         titulo="Nuevo pedido"
         descripcion="Escribe lo que necesitas. El precio no se pide aquí: se apunta al recibirlo."
-        onCerrar={limpiar}
+        onCerrar={() => void cerrarGuardando()}
         pie={<>
-          <Boton tono="discreto" onClick={limpiar}>Cancelar</Boton>
+          <Boton tono="discreto" onClick={() => void cerrarGuardando()}>Guardar y salir</Boton>
           <Boton cargando={crear.isPending} disabled={!proveedorId || !lineas.some((l) => l.texto.trim())}
             onClick={async () => { await guardar('borrador'); limpiar() }}>Guardar</Boton>
         </>}
@@ -261,45 +310,46 @@ export function Pedidos({ localId }: { localId?: string }) {
             <div className="flex flex-col gap-3">
               {lineas.map((l, i) => (
                 <div key={i} className="rounded-lg border border-borde bg-panel p-3">
-                  <div className="grid grid-cols-[90px,110px,1fr] items-end gap-2">
-                    <Campo etiqueta={i === 0 ? 'Cantidad' : ''} inputMode="decimal" placeholder="5"
+                  <div className="flex items-start gap-2">
+                    <div className="min-w-0 flex-1">
+                      <LineaProducto
+                        valor={l.texto}
+                        productos={productos ?? []}
+                        onCambio={(texto, prod) =>
+                          setLineas(lineas.map((x, j) => j === i
+                            ? {
+                                ...x, texto,
+                                productoId: prod?.id ?? null,
+                                unidad: prod ? GRANDE[prod.unidad_uso as 'g' | 'ml' | 'ud'] : x.unidad,
+                              }
+                            : x))
+                        }
+                      />
+                    </div>
+                    {lineas.length > 1 && (
+                      <button aria-label="Quitar línea"
+                        onClick={() => setLineas(lineas.filter((_, j) => j !== i))}
+                        className="mt-6 grid size-11 shrink-0 place-items-center rounded-md text-tinta-tenue hover:bg-lienzo">
+                        <Trash2 className="size-4" aria-hidden />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="mt-2 grid grid-cols-[1fr,120px] gap-2">
+                    <Campo etiqueta="Cantidad" obligatorio inputMode="decimal" placeholder="5"
                       value={l.cantidad}
                       onChange={(e) => setLineas(lineas.map((x, j) => j === i ? { ...x, cantidad: e.target.value } : x))} />
-                    <Selector etiqueta={i === 0 ? 'Unidad' : ''} value={l.unidad}
+                    <Selector etiqueta="Unidad" obligatorio value={l.unidad}
                       onChange={(e) => setLineas(lineas.map((x, j) => j === i ? { ...x, unidad: e.target.value } : x))}>
                       {UNIDADES_PEDIDO.map((u) => <option key={u}>{u}</option>)}
                     </Selector>
-                    <div className="flex items-end gap-2">
-                      <div className="min-w-0 flex-1">
-                        <Campo etiqueta={i === 0 ? 'Qué' : ''} placeholder="Atún de barco"
-                          list="productos-inventario"
-                          value={l.texto}
-                          onChange={(e) => {
-                            const texto = e.target.value
-                            const enc = (productos ?? []).find((p) => p.nombre.toLowerCase() === texto.toLowerCase())
-                            setLineas(lineas.map((x, j) => j === i
-                              ? { ...x, texto, productoId: enc?.id ?? null, unidad: enc ? GRANDE[enc.unidad_uso as 'g' | 'ml' | 'ud'] : x.unidad }
-                              : x))
-                          }} />
-                      </div>
-                      {lineas.length > 1 && (
-                        <button aria-label="Quitar línea"
-                          onClick={() => setLineas(lineas.filter((_, j) => j !== i))}
-                          className="mb-0.5 grid size-11 place-items-center rounded-md text-tinta-tenue hover:bg-lienzo">
-                          <Trash2 className="size-4" aria-hidden />
-                        </button>
-                      )}
-                    </div>
                   </div>
+
                   {l.productoId && (
                     <p className="mt-1.5 text-xs font-semibold text-ok">Enlazado con tu inventario</p>
                   )}
                 </div>
               ))}
-
-              <datalist id="productos-inventario">
-                {(productos ?? []).map((p) => <option key={p.id} value={p.nombre} />)}
-              </datalist>
 
               <Boton tono="discreto" onClick={() => setLineas([...lineas, { ...LINEA_VACIA }])}>
                 <Plus className="size-4" aria-hidden /> Añadir otra línea
@@ -391,5 +441,69 @@ function Paso({ numero, titulo, explicacion, children }: {
       </div>
       <div className="flex flex-col gap-3 pl-8">{children}</div>
     </section>
+  )
+}
+
+/**
+ * Campo de producto con sugerencias del inventario: escribes «at» y te propone
+ * «Atún rojo — 5 kg en cámara», para no dar de alta dos veces lo mismo.
+ */
+function LineaProducto({
+  valor, productos, onCambio,
+}: {
+  valor: string
+  productos: Producto[]
+  onCambio: (texto: string, producto: Producto | null) => void
+}) {
+  const [abierto, setAbierto] = useState(false)
+  const limpio = valor.trim().toLowerCase()
+
+  const sugerencias = limpio.length >= 1
+    ? productos
+        .filter((p) => p.nombre.toLowerCase().includes(limpio))
+        .slice(0, 5)
+    : []
+
+  return (
+    <div className="relative">
+      <Campo
+        etiqueta="Qué necesitas"
+        obligatorio
+        placeholder="Atún rojo"
+        autoComplete="off"
+        value={valor}
+        onFocus={() => setAbierto(true)}
+        onBlur={() => window.setTimeout(() => setAbierto(false), 150)}
+        onChange={(e) => {
+          const texto = e.target.value
+          const exacto = productos.find((p) => p.nombre.toLowerCase() === texto.trim().toLowerCase())
+          onCambio(texto, exacto ?? null)
+          setAbierto(true)
+        }}
+      />
+      {abierto && sugerencias.length > 0 && (
+        <ul className="absolute inset-x-0 top-full z-20 mt-1 overflow-hidden rounded-lg border border-borde bg-lienzo shadow-hoja">
+          {sugerencias.map((p) => {
+            const unidad = GRANDE[p.unidad_uso as 'g' | 'ml' | 'ud']
+            const hay = aGrande(p.stock_actual, p.unidad_uso as 'g' | 'ml' | 'ud')
+            return (
+              <li key={p.id}>
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => { onCambio(p.nombre, p); setAbierto(false) }}
+                  className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left hover:bg-naranja-suave"
+                >
+                  <span className="min-w-0 truncate text-sm font-medium">{p.nombre}</span>
+                  <span className="shrink-0 text-xs text-tinta-tenue">
+                    {hay > 0 ? `${hay.toFixed(1).replace('.', ',')} ${unidad} en cámara` : 'sin existencias'}
+                  </span>
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
   )
 }

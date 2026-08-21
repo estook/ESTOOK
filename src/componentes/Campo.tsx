@@ -19,9 +19,13 @@ function Envoltura({
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 flex items-baseline gap-1 text-xs font-semibold uppercase tracking-wide text-tinta-suave">
-        {etiqueta}
-        {!obligatorio && <span className="font-normal normal-case tracking-normal text-tinta-tenue">(opcional)</span>}
+      <span className="mb-1.5 flex flex-wrap items-baseline gap-x-1.5 text-xs font-semibold uppercase leading-tight tracking-wide text-tinta-suave">
+        <span className="min-w-0">{etiqueta}</span>
+        {!obligatorio && (
+          <span className="shrink-0 text-[10px] font-normal normal-case tracking-normal text-tinta-tenue">
+            opcional
+          </span>
+        )}
       </span>
       {children}
       {error ? (

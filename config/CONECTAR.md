@@ -97,7 +97,7 @@ Aquí es donde viven las claves que no pueden pisar el navegador:
 
 ```bash
 supabase secrets set \
-  SUPABASE_SERVICE_KEY="la_clave_secreta_del_paso_1.3" \
+  CLAVE_SERVICIO="la_clave_secreta_del_paso_1.3" \
   GOOGLE_MAPS_KEY="TU_CLAVE_DE_GOOGLE_MAPS" \
   AI_API_KEY="TU_CLAVE_DE_GEMINI" \
   AI_MODELO_RAPIDO="gemini-2.5-flash-lite" \
@@ -105,7 +105,9 @@ supabase secrets set \
   APP_URL="https://estook.com"
 ```
 
-`SUPABASE_URL` y `SUPABASE_ANON_KEY` ya las pone Supabase sola dentro de las funciones.
+`SUPABASE_URL` y `SUPABASE_ANON_KEY` ya las pone Supabase sola dentro de las funciones — de
+hecho, el panel no deja crear secretos que empiecen por `SUPABASE_`: ese prefijo está reservado.
+Por eso la clave secreta se llama aquí `CLAVE_SERVICIO`.
 
 **Comprobación:** `supabase secrets list` tiene que devolver esos seis nombres.
 

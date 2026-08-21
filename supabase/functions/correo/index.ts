@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
     }
 
     const { sb } = await exigirMiembro(req, local_id)
-    const servicio = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_KEY')!)
+    const servicio = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('CLAVE_SERVICIO')!)
 
     const { data: local } = await sb.from('locales')
       .select('nombre, color_secundario, cuenta_id').eq('id', local_id).single()
