@@ -22,8 +22,25 @@ const cabeceras = {
 const responder = (d: unknown, e = 200) =>
   new Response(JSON.stringify(d), { status: e, headers: { ...cabeceras, 'Content-Type': 'application/json' } })
 
-const clienteDeServicio = () =>
-  createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('CLAVE_SERVICIO')!)
+/**
+ * Supabase ya inyecta SUPABASE_SERVICE_ROLE_KEY en toda función desplegada, así
+ * que no hace falta crear ningún secreto para esto. Se aceptan además los
+ * nombres que hayamos usado antes, por si alguien lo puso a mano.
+ */
+const claveServicio = () =>
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+  ?? Deno.env.get('CLAVE_SERVICIO')
+  ?? Deno.env.get('SERVICE_KEY')
+  ?? ''
+
+function clienteDeServicio(req?: Request) {
+  const clave = claveServicio()
+  if (clave) return createClient(Deno.env.get('SUPABASE_URL')!, clave)
+  // Sin clave de servicio, la medición se hace con la sesión de quien pregunta.
+  return createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
+    global: { headers: { Authorization: req?.headers.get('Authorization') ?? '' } },
+  })
+}
 
 async function exigirMiembro(req: Request, localId: string) {
   const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
@@ -72,10 +89,37 @@ Cuando propongas una acción, termina con una sola acción concreta.`
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cabeceras })
+
+  // Comprobación rápida: abre la URL de la función en el navegador y te dice
+  // qué secretos faltan, sin enseñar ninguno.
+  if (req.method === 'GET') {
+    return responder({
+      funcion: 'fogon',
+      secretos: {
+        CLAVE_SERVICIO: Boolean(claveServicio()),
+        AI_API_KEY: Boolean(Deno.env.get('AI_API_KEY')),
+        APP_URL: Deno.env.get('APP_URL') ?? '(sin poner)',
+        modelo_rapido: MODELO_RAPIDO,
+      },
+    })
+  }
+
   if (req.method !== 'POST') return responder({ error: 'Método no permitido.' }, 405)
 
   try {
-    const { local_id, pregunta, pantalla, tarea = 'chat' } = await req.json()
+    const cuerpo = await req.json()
+    const { local_id, pregunta, pantalla, tarea = 'chat' } = cuerpo
+
+    // Comprobación: manda {"diagnostico": true} y dice qué falta, sin enseñar nada.
+    if (cuerpo?.diagnostico) {
+      return responder({
+        funcion: 'fogon',
+        clave_de_servicio: Boolean(claveServicio()),
+        clave_del_modelo: Boolean(Deno.env.get('AI_API_KEY')),
+        modelo: MODELO_RAPIDO,
+        app_url: Deno.env.get('APP_URL') ?? '(sin poner)',
+      })
+    }
     if (typeof local_id !== 'string' || typeof pregunta !== 'string' || !pregunta.trim()) {
       return responder({ error: 'Falta el local o la pregunta.' }, 400)
     }
@@ -87,7 +131,7 @@ Deno.serve(async (req) => {
     }
 
     const { sb, miembro } = await exigirMiembro(req, local_id)
-    const servicio = clienteDeServicio()
+    const servicio = clienteDeServicio(req)
 
     const { data: local } = await sb.from('locales')
       .select('id, nombre, cuenta_id, cuentas(plan)').eq('id', local_id).single()
@@ -96,20 +140,31 @@ Deno.serve(async (req) => {
     const cuentaId = local.cuenta_id as string
 
     // Ráfaga: no corta la sesión, solo pide esperar.
-    const haceUnRato = new Date(Date.now() - RAFAGA.minutos * 60000).toISOString()
-    const { count: recientes } = await servicio.from('consumo_ia')
-      .select('id', { count: 'exact', head: true })
-      .eq('local_id', local_id).eq('persona_ref', miembro.id).gte('creado_en', haceUnRato)
-    if ((recientes ?? 0) >= RAFAGA.preguntas) {
+    // Si la tabla de consumo aún no tiene la columna, no se bloquea nada.
+    let recientes = 0
+    try {
+      const haceUnRato = new Date(Date.now() - RAFAGA.minutos * 60000).toISOString()
+      const { count } = await servicio.from('consumo_ia')
+        .select('id', { count: 'exact', head: true })
+        .eq('local_id', local_id).eq('persona_ref', miembro.id).gte('creado_en', haceUnRato)
+      recientes = count ?? 0
+    } catch { recientes = 0 }
+
+    if (recientes >= RAFAGA.preguntas) {
       return responder({ respuesta: 'Espera un momento, que vas muy rápido. Pregúntame otra vez en un minuto.' })
     }
 
     // Cupo del día por plan
-    const desde = new Date(); desde.setHours(0, 0, 0, 0)
-    const { count } = await servicio.from('consumo_ia').select('id', { count: 'exact', head: true })
-      .eq('local_id', local_id).eq('tarea', 'chat').gte('creado_en', desde.toISOString())
+    let count = 0
+    try {
+      const desde = new Date(); desde.setHours(0, 0, 0, 0)
+      const r = await servicio.from('consumo_ia').select('id', { count: 'exact', head: true })
+        .eq('local_id', local_id).eq('tarea', 'chat').gte('creado_en', desde.toISOString())
+      count = r.count ?? 0
+    } catch { count = 0 }
+
     const cupo = CUPOS[plan] ?? 10
-    if ((count ?? 0) >= cupo) {
+    if (count >= cupo) {
       return responder({
         agotado: true,
         respuesta: `Has llegado a las ${cupo} preguntas de hoy de tu plan. Los avisos automáticos siguen funcionando.`,
@@ -117,8 +172,11 @@ Deno.serve(async (req) => {
     }
 
     // Topes de gasto
-    const gastoLocal = await gastoDeHoy(cuentaId, local_id)
-    const gastoEmpresa = await gastoDeHoy(cuentaId)
+    let gastoLocal = 0, gastoEmpresa = 0
+    try {
+      gastoLocal = await gastoDeHoy(cuentaId, local_id)
+      gastoEmpresa = await gastoDeHoy(cuentaId)
+    } catch { /* sin datos de consumo, se sigue igual */ }
     const topeLocal = TOPES_IA[plan] ?? 0.15
     const apretado = gastoLocal > topeLocal * 0.8 || gastoEmpresa > TOPE_EMPRESA * 0.8
     const modelo = (tarea === 'cierre' || tarea === 'resumen') && !apretado ? MODELO_ANALISIS : MODELO_RAPIDO
@@ -127,10 +185,13 @@ Deno.serve(async (req) => {
     const { data: ctx } = await sb.from('contexto_local')
       .select('resumen_dia, perfil_negocio').eq('local_id', local_id).maybeSingle()
 
-    // Notas del local: acuerdos y manías de la casa que no caben en ningún campo
-    const { data: notas } = await sb.from('notas')
-      .select('texto').eq('local_id', local_id).order('creado_en', { ascending: false }).limit(15)
-    const apuntes = (notas ?? []).map((n: { texto: string }) => `· ${n.texto}`).join('\n')
+    // Notas del local: si la tabla todavía no existe, se sigue sin ellas
+    let apuntes = ''
+    try {
+      const { data: notas } = await sb.from('notas')
+        .select('texto').eq('local_id', local_id).order('creado_en', { ascending: false }).limit(15)
+      apuntes = (notas ?? []).map((n: { texto: string }) => `· ${n.texto}`).join('\n')
+    } catch { apuntes = '' }
     const contexto = [
       `Local: ${local.nombre ?? ''}. Hablas con un ${String(miembro.rol).replace('_', ' ')}.`,
       pantalla ? `Está en la pantalla: ${String(pantalla).slice(0, 80)}.` : '',
@@ -153,7 +214,15 @@ Deno.serve(async (req) => {
       }),
     })
     const ms = Date.now() - t0
-    if (!r.ok) return responder({ error: 'Fogón no ha podido responder. Inténtalo otra vez.' }, 502)
+    if (!r.ok) {
+      const detalle = await r.text()
+      console.error('gemini', r.status, detalle)
+      return responder({
+        error: r.status === 400 || r.status === 403
+          ? 'La clave de Gemini no vale o la API «Generative Language» no está activada en Google Cloud.'
+          : 'Fogón no ha podido responder. Inténtalo otra vez.',
+      }, 502)
+    }
 
     const datos = await r.json()
     const respuesta = datos?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? '').join('') ?? ''
@@ -161,19 +230,24 @@ Deno.serve(async (req) => {
     const tarifa = TARIFAS[modelo] ?? TARIFAS['gemini-2.5-flash-lite']
     const coste = ((uso.promptTokenCount ?? 0) * tarifa.entrada + (uso.candidatesTokenCount ?? 0) * tarifa.salida) / 1_000_000
 
-    await servicio.from('consumo_ia').insert({
-      cuenta_id: cuentaId, local_id, persona_ref: miembro.id, tarea, modelo,
-      tokens_entrada: uso.promptTokenCount ?? 0,
-      tokens_salida: uso.candidatesTokenCount ?? 0,
-      con_cache: Boolean(uso.cachedContentTokenCount),
-      coste_eur: coste, milisegundos: ms,
-    })
+    // Medir no puede impedir responder
+    try {
+      await servicio.from('consumo_ia').insert({
+        cuenta_id: cuentaId, local_id, persona_ref: miembro.id, tarea, modelo,
+        tokens_entrada: uso.promptTokenCount ?? 0,
+        tokens_salida: uso.candidatesTokenCount ?? 0,
+        con_cache: Boolean(uso.cachedContentTokenCount),
+        coste_eur: coste, milisegundos: ms,
+      })
+    } catch (e) { console.error('no se pudo registrar el consumo:', e) }
 
-    return responder({ respuesta, modelo, restantes: cupo - (count ?? 0) - 1 })
+    return responder({ respuesta, modelo, restantes: cupo - count - 1 })
   } catch (e) {
     const mensaje = e instanceof Error ? e.message : ''
-    if (mensaje === 'sin sesion' || mensaje === 'sin acceso') return responder({ error: 'Sin acceso.' }, 403)
-    console.error('fogon:', mensaje)   // el detalle se queda en el log, no sale al cliente
-    return responder({ error: 'Algo ha fallado. Inténtalo otra vez.' }, 500)
+    if (mensaje === 'sin sesion') return responder({ error: 'Tu sesión ha caducado. Vuelve a entrar.' }, 403)
+    if (mensaje === 'sin acceso') return responder({ error: 'Tu usuario no está dado de alta en este local.' }, 403)
+    console.error('fogon:', mensaje)
+    // El motivo se devuelve para poder arreglarlo: nunca contiene claves.
+    return responder({ error: 'Algo ha fallado en Fogón.', detalle: mensaje }, 500)
   }
 })

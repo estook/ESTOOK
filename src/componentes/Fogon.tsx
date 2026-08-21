@@ -32,9 +32,23 @@ export function Fogon({ abierto, onCerrar, pantalla }: { abierto: boolean; onCer
     setTexto(''); setPensando(true); setFallo(null)
     try {
       const r = await preguntarAFogon(actual.local_id, pregunta.trim(), pantalla)
-      setTurnos((t) => [...t, { de: 'fogon', texto: r.respuesta || 'No he podido contestar a eso.' }])
-    } catch {
-      setFallo('Fogón no ha contestado. Comprueba que las funciones están publicadas y los secretos puestos.')
+      if (r.error) {
+        setFallo(`${r.error}${r.detalle ? ` (${r.detalle})` : ''}`)
+      } else {
+        setTurnos((t) => [...t, { de: 'fogon', texto: r.respuesta || 'No he podido contestar a eso.' }])
+      }
+    } catch (e) {
+      const bruto = e as { message?: string; context?: { status?: number } }
+      const codigo = bruto?.context?.status
+      setFallo(
+        codigo === 401 || codigo === 403
+          ? 'Fogón no reconoce tu sesión. Cierra sesión y vuelve a entrar.'
+          : codigo === 503
+            ? 'Falta la clave del modelo en los secretos de Supabase (AI_API_KEY).'
+            : codigo === 404
+              ? 'La función «fogon» no está publicada en Supabase.'
+              : `Fogón no ha contestado${bruto?.message ? `: ${bruto.message}` : ''}.`,
+      )
     } finally {
       setPensando(false)
     }

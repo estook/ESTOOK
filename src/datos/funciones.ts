@@ -15,6 +15,9 @@ export interface RespuestaFogon {
   modelo?: string
   restantes?: number
   agotado?: boolean
+  /** Si algo falla, la función devuelve el motivo aquí en vez de un genérico. */
+  error?: string
+  detalle?: string
 }
 
 /** Una pregunta a Fogón. `pantalla` es dónde está el usuario: da contexto, no limita lo que sabe. */
