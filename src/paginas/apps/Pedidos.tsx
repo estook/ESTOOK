@@ -257,7 +257,7 @@ export function Pedidos({ localId }: { localId?: string }) {
           </Paso>
 
           <Paso numero={2} titulo="¿Qué necesitas?"
-            explicacion="Escribe lo que quieras, esté o no en tu despensa. Si escribes algo que ya tienes dado de alta, se enlaza solo y el stock subirá al recibirlo.">
+            explicacion="Escribe lo que quieras, esté o no en tu inventario. Si escribes algo que ya tienes dado de alta, se enlaza solo y el stock subirá al recibirlo.">
             <div className="flex flex-col gap-3">
               {lineas.map((l, i) => (
                 <div key={i} className="rounded-lg border border-borde bg-panel p-3">
@@ -272,7 +272,7 @@ export function Pedidos({ localId }: { localId?: string }) {
                     <div className="flex items-end gap-2">
                       <div className="min-w-0 flex-1">
                         <Campo etiqueta={i === 0 ? 'Qué' : ''} placeholder="Atún de barco"
-                          list="productos-despensa"
+                          list="productos-inventario"
                           value={l.texto}
                           onChange={(e) => {
                             const texto = e.target.value
@@ -292,12 +292,12 @@ export function Pedidos({ localId }: { localId?: string }) {
                     </div>
                   </div>
                   {l.productoId && (
-                    <p className="mt-1.5 text-xs font-semibold text-ok">Enlazado con tu despensa</p>
+                    <p className="mt-1.5 text-xs font-semibold text-ok">Enlazado con tu inventario</p>
                   )}
                 </div>
               ))}
 
-              <datalist id="productos-despensa">
+              <datalist id="productos-inventario">
                 {(productos ?? []).map((p) => <option key={p.id} value={p.nombre} />)}
               </datalist>
 

@@ -19,10 +19,12 @@ import {
 } from '@/datos/unidades'
 import { Pedidos } from '@/paginas/apps/Pedidos'
 import { AsistenteProducto } from '@/paginas/apps/AsistenteProducto'
+import { BotonDocumento } from '@/documentos/BotonDocumento'
+import { hojaDeRecuento, inventarioValorado } from '@/documentos/plantillas'
 
 type Pestana = 'productos' | 'proveedores' | 'pedidos'
 
-export function Despensa() {
+export function Inventario() {
   const { actual } = useSesion()
   const [pestana, setPestana] = useState<Pestana>('productos')
   const local = actual?.local_id
@@ -31,7 +33,7 @@ export function Despensa() {
     <div className="flex flex-col gap-4">
       <header>
         <h1 className="flex items-center gap-2 font-titulo text-2xl font-semibold">
-          <Boxes className="size-6 text-naranja" aria-hidden /> Despensa
+          <Boxes className="size-6 text-naranja" aria-hidden /> Inventario
         </h1>
         <p className="mt-1 max-w-2xl text-sm text-tinta-suave">
           Lo que hay en cámara, a quién se lo compras y lo que te cuesta de verdad. El resto de la
@@ -142,6 +144,22 @@ function Productos({ localId }: { localId?: string }) {
             value={busca} onChange={(e) => setBusca(e.target.value)}
           />
         </div>
+        <BotonDocumento
+          opciones={[
+            {
+              clave: 'valorado', nombre: 'Inventario valorado',
+              descripcion: 'Lo que hay en cámara y lo que vale, por categorías.',
+              archivo: 'inventario-valorado',
+              generar: (marca, quien) => inventarioValorado(marca, lista, { generadoPor: quien }),
+            },
+            {
+              clave: 'recuento', nombre: 'Hoja de recuento',
+              descripcion: 'Para imprimir y llevar a la cámara, con casillas en blanco.',
+              archivo: 'hoja-de-recuento',
+              generar: (marca, quien) => hojaDeRecuento(marca, lista, { generadoPor: quien }),
+            },
+          ]}
+        />
         <Boton onClick={() => setNuevo(true)}><Plus className="size-4" aria-hidden /> Nuevo producto</Boton>
       </div>
 

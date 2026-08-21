@@ -31,7 +31,7 @@ function Proximamente({ partes }: { partes: [string, string][] }) {
       </ul>
       <p className="mt-3 text-sm text-tinta-suave">
         La base de datos de todo esto ya está montada y las reglas de acceso también: falta la
-        pantalla. Mientras tanto, <Link to="/app/despensa" className="font-semibold text-naranja-oscuro underline">Despensa</Link> ya funciona entera.
+        pantalla. Mientras tanto, <Link to="/app/inventario" className="font-semibold text-naranja-oscuro underline">Inventario</Link> ya funciona entera.
       </p>
     </Tarjeta>
   )

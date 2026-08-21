@@ -64,7 +64,7 @@ export function MockPanel() {
 export function MockDespensa() {
   return (
     <Movil>
-      <Barra titulo="Despensa · Productos" />
+      <Barra titulo="Inventario · Productos" />
       <div className="bg-lienzo">
         <Fila a="Pulpo cocido" b="4,2 kg" />
         <Fila a="Merluza" b="2,1 kg · bajo mínimo" tono="alerta" />
@@ -164,7 +164,7 @@ export const PANTALLAS = [
     mock: MockPanel,
   },
   {
-    clave: 'despensa', nombre: 'Despensa',
+    clave: 'inventario', nombre: 'Inventario',
     titulo: 'El coste real, no el precio del envase',
     texto: 'Una caja de merluza de 5 kg a 42 € no cuesta 8,40 €/kg: cuesta 12,35 €/kg después de limpiarla. Estook lo calcula con el formato y el rendimiento, y con eso salen los escandallos.',
     mock: MockDespensa,

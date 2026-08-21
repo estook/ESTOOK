@@ -7,6 +7,7 @@ import {
 import { Boton } from '@/componentes/Boton'
 import { Aviso, Cargando, Insignia } from '@/componentes/Estado'
 import { CaraFogon } from '@/marca/Logo'
+import { Buscador } from '@/componentes/Buscador'
 import { useSesion } from '@/app/sesion'
 import { euros, usePedidos, useProductos } from '@/datos/despensa'
 import { usePlatos } from '@/datos/cocina'
@@ -25,11 +26,11 @@ function saludo() {
 /** Las acciones rápidas dependen del puesto: cada uno ve lo suyo y nada más. */
 function accionesDeRol(rol: string) {
   const todas = [
-    { clave: 'producto', texto: 'Añadir producto', icono: Package, ruta: '/app/despensa', roles: ['gerente', 'jefe_cocina', 'jefe_sala'] },
-    { clave: 'pedido', texto: 'Crear pedido', icono: ShoppingCart, ruta: '/app/despensa', roles: ['gerente', 'jefe_cocina', 'jefe_sala', 'cocinero'] },
+    { clave: 'producto', texto: 'Añadir producto', icono: Package, ruta: '/app/inventario', roles: ['gerente', 'jefe_cocina', 'jefe_sala'] },
+    { clave: 'pedido', texto: 'Crear pedido', icono: ShoppingCart, ruta: '/app/inventario', roles: ['gerente', 'jefe_cocina', 'jefe_sala', 'cocinero'] },
     { clave: 'merma', texto: 'Registrar merma', icono: Trash2, ruta: '/app/servicio', roles: ['gerente', 'jefe_cocina', 'jefe_sala', 'cocinero', 'sala'] },
     { clave: 'appcc', texto: 'Registrar temperatura', icono: ClipboardCheck, ruta: '/app/servicio', roles: ['gerente', 'jefe_cocina', 'jefe_sala', 'cocinero', 'sala'] },
-    { clave: 'albaran', texto: 'Escanear albarán', icono: Camera, ruta: '/app/despensa', roles: ['gerente', 'jefe_cocina'], pronto: true },
+    { clave: 'albaran', texto: 'Escanear albarán', icono: Camera, ruta: '/app/inventario', roles: ['gerente', 'jefe_cocina'], pronto: true },
     { clave: 'factura', texto: 'Escanear factura', icono: Receipt, ruta: '/app/negocio', roles: ['gerente'], pronto: true },
   ]
   return todas.filter((a) => a.roles.includes(rol))
@@ -74,7 +75,7 @@ export function PanelInicio() {
     bajoMinimo.length > 0 && {
       clave: 'stock', titulo: 'Género bajo mínimo',
       texto: `${bajoMinimo.slice(0, 3).map((p) => p.nombre).join(', ')}${bajoMinimo.length > 3 ? ` y ${bajoMinimo.length - 3} más` : ''}.`,
-      accion: 'Montar el pedido', ruta: '/app/despensa', icono: Package, nivel: 'alerta' as const,
+      accion: 'Montar el pedido', ruta: '/app/inventario', icono: Package, nivel: 'alerta' as const,
       visible: manda || rol === 'cocinero',
     },
     appccPendiente.length > 0 && {
@@ -86,13 +87,13 @@ export function PanelInicio() {
     pedidosAbiertos.length > 0 && {
       clave: 'pedidos', titulo: `${pedidosAbiertos.length} pedido(s) sin recibir`,
       texto: 'Cuando llegue el género, recíbelo para que suba el stock.',
-      accion: 'Ver pedidos', ruta: '/app/despensa', icono: ShoppingCart, nivel: 'aviso' as const,
+      accion: 'Ver pedidos', ruta: '/app/inventario', icono: ShoppingCart, nivel: 'aviso' as const,
       visible: manda,
     },
     sinPrecio.length > 0 && {
       clave: 'precios', titulo: `${sinPrecio.length} producto(s) sin precio`,
       texto: 'Sin precio, los platos que los llevan salen con el margen falseado.',
-      accion: 'Poner precios', ruta: '/app/despensa', icono: Receipt, nivel: 'aviso' as const,
+      accion: 'Poner precios', ruta: '/app/inventario', icono: Receipt, nivel: 'aviso' as const,
       visible: manda,
     },
     sinFicha.length > 0 && {
@@ -130,6 +131,8 @@ export function PanelInicio() {
           {enCola > 0 && <Insignia tono="aviso">{enCola} sin subir</Insignia>}
         </div>
       </header>
+
+      <Buscador rol={rol} />
 
       {manda ? (
         <button

@@ -6,7 +6,7 @@ import { Entrar } from '@/paginas/Entrar'
 import { Cimientos } from '@/paginas/Cimientos'
 import { Admin } from '@/paginas/Admin'
 import { PanelInicio } from '@/paginas/apps/PanelInicio'
-import { Despensa } from '@/paginas/apps/Despensa'
+import { Inventario } from '@/paginas/apps/Despensa'
 import { Ajustes, Chat, Competencia, Equipo, Negocio, Resenas } from '@/paginas/apps/Otras'
 import { Servicio } from '@/paginas/apps/Servicio'
 import { Cocina } from '@/paginas/apps/Cocina'
@@ -20,7 +20,7 @@ export function App() {
           <Route path="/entrar" element={<Entrar />} />
           <Route path="/app" element={<Marco />}>
             <Route index element={<PanelInicio />} />
-            <Route path="despensa" element={<Despensa />} />
+            <Route path="inventario" element={<Inventario />} />
             <Route path="cocina" element={<Cocina />} />
             <Route path="servicio" element={<Servicio />} />
             <Route path="equipo" element={<Equipo />} />

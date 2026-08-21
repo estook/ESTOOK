@@ -32,7 +32,7 @@ function Aparece({ children, className = '' }: { children: ReactNode; className?
 }
 
 const apps = [
-  { icono: Boxes, nombre: 'Género y proveedores', texto: 'Qué hay en la cámara, a cuánto te lo vende cada proveedor y cuándo hay que pedir. Los albaranes entran haciéndoles una foto.' },
+  { icono: Boxes, nombre: 'Inventario y proveedores', texto: 'Qué hay en la cámara, a cuánto te lo vende cada proveedor y cuándo hay que pedir. Los albaranes entran haciéndoles una foto.' },
   { icono: ChefHat, nombre: 'Recetas y carta', texto: 'Cada plato con sus gramajes, sus pasos y su coste real. Sabes al céntimo lo que ganas con cada uno y qué precio deberías poner.' },
   { icono: ClipboardCheck, nombre: 'El día a día', texto: 'Cierre de caja en un minuto, control de temperaturas y registros sanitarios firmados. La carpeta para el inspector, siempre lista.' },
   { icono: CalendarClock, nombre: 'Personal', texto: 'Cuadrante con turnos partidos, fichajes y horas. Al publicarlo, cada uno recibe el suyo en el móvil.' },

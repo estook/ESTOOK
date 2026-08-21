@@ -8,6 +8,8 @@ import { Aviso, Cargando, Insignia, Vacio } from '@/componentes/Estado'
 import { Tarjeta } from '@/componentes/Tarjeta'
 import { useSesion } from '@/app/sesion'
 import { euros, useProductos, type Producto } from '@/datos/despensa'
+import { BotonDocumento } from '@/documentos/BotonDocumento'
+import { cartaCompleta, fichaTecnica } from '@/documentos/plantillas'
 import {
   ETIQUETA_CATEGORIA, clasificar, escandallo, precioRecomendado,
   useBorrarIngrediente, useCarta, useGuardarIngrediente, useGuardarPlato,
@@ -180,7 +182,32 @@ function FichaAbierta({
       titulo={plato.nombre}
       descripcion={`${plato.familia ?? 'Sin familia'} · versión ${plato.version}`}
       onCerrar={onCerrar}
-      pie={<Boton tono="discreto" onClick={onCerrar}>Cerrar</Boton>}
+      pie={
+        <div className="flex w-full items-center gap-2">
+          <BotonDocumento
+            pequeno
+            etiqueta="PDF"
+            opciones={[
+              {
+                clave: 'con', nombre: 'Ficha con costes',
+                descripcion: 'Ingredientes, coste por línea, margen y precio. Para jefatura.',
+                archivo: `ficha-${plato.nombre}`,
+                generar: (marca, quien) =>
+                  fichaTecnica(marca, plato, ingredientes ?? [], productos, { conCostes: true }, { generadoPor: quien }),
+              },
+              {
+                clave: 'sin', nombre: 'Ficha para cocina',
+                descripcion: 'Gramajes y pasos, sin un solo importe. Para colgar en el pase.',
+                archivo: `ficha-cocina-${plato.nombre}`,
+                generar: (marca, quien) =>
+                  fichaTecnica(marca, plato, ingredientes ?? [], productos, { conCostes: false }, { generadoPor: quien }),
+              },
+            ]}
+          />
+          <div className="flex-1" />
+          <Boton tono="discreto" onClick={onCerrar}>Cerrar</Boton>
+        </div>
+      }
     >
       <div className="flex flex-col gap-4 pt-1">
         {conImportes && cuentas && (
@@ -379,6 +406,30 @@ function Carta({ localId }: { localId?: string }) {
             setNombreSeccion('')
           }}
         ><Plus className="size-4" aria-hidden /> Añadir sección</Boton>
+        <BotonDocumento
+          opciones={[{
+            clave: 'carta', nombre: 'Carta completa',
+            descripcion: 'A dos columnas, con secciones y precios. Lista para imprimir.',
+            archivo: 'carta',
+            generar: (marca, quien) => cartaCompleta(
+              marca,
+              (secciones ?? []).map((s) => ({
+                nombre: s.nombre,
+                platos: s.carta_platos
+                  .slice().sort((a, b) => a.orden - b.orden)
+                  .map((cp) => {
+                    const ficha = (platos ?? []).find((p) => p.id === cp.plato_id)
+                    return {
+                      nombre: ficha?.nombre ?? cp.nombre ?? 'Plato',
+                      descripcion: cp.descripcion ?? ficha?.descripcion ?? null,
+                      precio: cp.precio ?? ficha?.precio_venta ?? null,
+                    }
+                  }),
+              })),
+              { generadoPor: quien },
+            ),
+          }]}
+        />
       </div>
 
       {(secciones ?? []).length === 0 ? (

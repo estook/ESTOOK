@@ -11,7 +11,7 @@ export interface AppEstook {
 }
 
 export const APPS: AppEstook[] = [
-  { clave: 'despensa', nombre: 'Despensa', dentro: 'Productos · Proveedores · Pedidos · Inventario · Mermas', ruta: '/app/despensa', icono: Boxes },
+  { clave: 'inventario', nombre: 'Inventario', dentro: 'Productos · Proveedores · Pedidos · Recuentos · Mermas', ruta: '/app/inventario', icono: Boxes },
   { clave: 'cocina', nombre: 'Cocina', dentro: 'Fichas · Elaboraciones · Carta · Menú del día', ruta: '/app/cocina', icono: ChefHat },
   { clave: 'servicio', nombre: 'Servicio', dentro: 'Jornada · Ventas · APPCC · Cierre', ruta: '/app/servicio', icono: ClipboardCheck },
   { clave: 'equipo', nombre: 'Equipo', dentro: 'Personas · Horarios · Fichajes', ruta: '/app/equipo', icono: CalendarClock },

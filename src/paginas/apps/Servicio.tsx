@@ -6,6 +6,8 @@ import { Hoja } from '@/componentes/Hoja'
 import { Tarjeta } from '@/componentes/Tarjeta'
 import { Aviso, Cargando, Insignia, Vacio } from '@/componentes/Estado'
 import { useSesion } from '@/app/sesion'
+import { BotonDocumento } from '@/documentos/BotonDocumento'
+import { parteAppcc, resumenDelDia } from '@/documentos/plantillas'
 import { euros, useProductos } from '@/datos/despensa'
 import {
   FIABILIDAD, fechaOperativa,
@@ -90,9 +92,29 @@ function Jornada({ localId }: { localId?: string }) {
           <Tarjeta
             titulo="Hoy"
             acciones={
-              jornada.cerrada_en
-                ? <Insignia tono="ok">Cerrada</Insignia>
-                : <Boton tamano="pequeno" onClick={() => setCerrando(true)}><Lock className="size-4" aria-hidden /> Cerrar caja</Boton>
+              <>
+                <BotonDocumento
+                  pequeno
+                  etiqueta="PDF del día"
+                  opciones={[{
+                    clave: 'resumen', nombre: 'Resumen del día',
+                    descripcion: 'Ventas, tickets, mermas y lo que quedó pendiente.',
+                    archivo: `resumen-${jornada.fecha}`,
+                    generar: (marca, quien) => resumenDelDia(marca, {
+                      dia: jornada.fecha,
+                      ventas: jornada.ventas_total,
+                      tickets: jornada.tickets,
+                      origen: jornada.origen,
+                      mermas: [],
+                      appccPendientes: pendientesAppcc.length,
+                      bajoMinimo: [],
+                    }, { generadoPor: quien }),
+                  }]}
+                />
+                {jornada.cerrada_en
+                  ? <Insignia tono="ok">Cerrada</Insignia>
+                  : <Boton tamano="pequeno" onClick={() => setCerrando(true)}><Lock className="size-4" aria-hidden /> Cerrar caja</Boton>}
+              </>
             }
           >
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -229,10 +251,21 @@ function Appcc({ localId }: { localId?: string }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-tinta-suave">
-        Dos toques por punto. Fuera de rango no se puede seguir sin escribir la acción correctiva, y
-        el registro se guarda aunque no haya cobertura en la cámara.
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="max-w-xl text-sm text-tinta-suave">
+          Dos toques por punto. Fuera de rango no se puede seguir sin escribir la acción correctiva,
+          y el registro se guarda aunque no haya cobertura en la cámara.
+        </p>
+        <BotonDocumento
+          opciones={[{
+            clave: 'parte', nombre: 'Parte de APPCC de hoy',
+            descripcion: 'El que mira el inspector: puntos, límites, valores y firmas.',
+            archivo: `appcc-${fechaOperativa()}`,
+            generar: (marca, quien) =>
+              parteAppcc(marca, fechaOperativa(), data.puntos, registros ?? [], { generadoPor: quien }),
+          }]}
+        />
+      </div>
 
       <ul className="flex flex-col gap-2">
         {data.puntos.map((p) => {
