@@ -6,7 +6,33 @@ import { exigirSupabase } from '@/datos/supabase'
  */
 async function llamar<T>(funcion: string, cuerpo: Record<string, unknown>): Promise<T> {
   const { data, error } = await exigirSupabase().functions.invoke<T>(funcion, { body: cuerpo })
-  if (error) throw error
+
+  /**
+   * Cuando la función responde con un código de error, la librería solo dice
+   * «non-2xx status code» y esconde el cuerpo. Aquí se abre ese cuerpo para
+   * poder enseñar el motivo real, que es lo único que sirve para arreglarlo.
+   */
+  if (error) {
+    const contexto = (error as { context?: Response }).context
+    if (contexto && typeof contexto.json === 'function') {
+      try {
+        const detalle = await contexto.clone().json() as { error?: string; detalle?: string }
+        const texto = [detalle?.error, detalle?.detalle].filter(Boolean).join(' · ')
+        if (texto) {
+          const e = new Error(texto) as Error & { estado?: number }
+          e.estado = contexto.status
+          throw e
+        }
+      } catch (e) {
+        if (e instanceof Error && e.message && !e.message.includes('JSON')) throw e
+      }
+      const e = new Error(`El servidor ha respondido ${contexto.status}.`) as Error & { estado?: number }
+      e.estado = contexto.status
+      throw e
+    }
+    throw error
+  }
+
   return data as T
 }
 

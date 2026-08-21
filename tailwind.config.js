@@ -9,10 +9,12 @@ export default {
           suave: '#3C4A4E',
           tenue: '#6B7A7E',
         },
+        // El color de la marca del local. Se inyecta en tiempo de ejecución,
+        // así que toda la app se pinta con el color que elija cada cliente.
         naranja: {
-          DEFAULT: '#FF7A00',
-          oscuro: '#E56D00',
-          suave: '#FFF1E3',
+          DEFAULT: 'rgb(var(--marca) / <alpha-value>)',
+          oscuro: 'rgb(var(--marca-oscuro) / <alpha-value>)',
+          suave: 'rgb(var(--marca-suave) / <alpha-value>)',
         },
         lienzo: '#FFFFFF',
         panel: '#F5F7F7',

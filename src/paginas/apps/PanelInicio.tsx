@@ -8,6 +8,7 @@ import { Boton } from '@/componentes/Boton'
 import { Aviso, Cargando, Insignia } from '@/componentes/Estado'
 import { CaraFogon } from '@/marca/Logo'
 import { Buscador } from '@/componentes/Buscador'
+import { WidgetsDelPanel } from '@/paginas/apps/Widgets'
 import { useSesion } from '@/app/sesion'
 import { euros, usePedidos, useProductos } from '@/datos/despensa'
 import { usePlatos } from '@/datos/cocina'
@@ -240,6 +241,8 @@ export function PanelInicio() {
               ))}
             </section>
           )}
+
+          <WidgetsDelPanel />
 
           <section className="rounded-xl border border-borde bg-tinta p-4 text-white">
             <div className="flex items-center gap-3">

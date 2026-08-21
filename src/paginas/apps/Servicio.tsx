@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { ClipboardCheck, Play, Thermometer, Trash2, Lock } from 'lucide-react'
 import { Boton } from '@/componentes/Boton'
 import { Campo, Selector } from '@/componentes/Campo'
@@ -8,7 +9,8 @@ import { Aviso, Cargando, Insignia, Vacio } from '@/componentes/Estado'
 import { useSesion } from '@/app/sesion'
 import { BotonDocumento } from '@/documentos/BotonDocumento'
 import { parteAppcc, resumenDelDia } from '@/documentos/plantillas'
-import { euros, useProductos } from '@/datos/despensa'
+import { euros, useProductos, type Producto } from '@/datos/despensa'
+import { BuscadorProducto } from '@/componentes/BuscadorProducto'
 import {
   FIABILIDAD, fechaOperativa,
   useAbrirJornada, useApuntarMerma, useCerrarJornada, useCrearPlanAppcc,
@@ -24,8 +26,19 @@ const MOTIVOS = [
 
 export function Servicio() {
   const { actual } = useSesion()
-  const [pestana, setPestana] = useState<'jornada' | 'appcc' | 'mermas'>('jornada')
+  const [params, setParams] = useSearchParams()
+  const [pestana, setPestana] = useState<'jornada' | 'appcc' | 'mermas'>(
+    (params.get('tab') as 'jornada' | 'appcc' | 'mermas') ?? 'jornada',
+  )
   const local = actual?.local_id
+  const hacer = params.get('hacer')
+
+  useEffect(() => {
+    const tab = params.get('tab')
+    if (tab === 'appcc' || tab === 'mermas' || tab === 'jornada') setPestana(tab)
+    if (hacer === 'merma') setPestana('mermas')
+    if (hacer === 'cierre') setPestana('jornada')
+  }, [params, hacer])
 
   return (
     <div className="flex flex-col gap-4">
@@ -50,16 +63,22 @@ export function Servicio() {
         ))}
       </nav>
 
-      {pestana === 'jornada' && <Jornada localId={local} />}
+      {pestana === 'jornada' && (
+        <Jornada localId={local} abrirCierre={hacer === 'cierre'} alConsumir={() => setParams({}, { replace: true })} />
+      )}
       {pestana === 'appcc' && <Appcc localId={local} />}
-      {pestana === 'mermas' && <Mermas localId={local} />}
+      {pestana === 'mermas' && (
+        <Mermas localId={local} abrirAlta={hacer === 'merma'} alConsumir={() => setParams({}, { replace: true })} />
+      )}
     </div>
   )
 }
 
 // ============================ JORNADA Y CIERRE ============================
 
-function Jornada({ localId }: { localId?: string }) {
+function Jornada({ localId, abrirCierre, alConsumir }: {
+  localId?: string; abrirCierre?: boolean; alConsumir?: () => void
+}) {
   const { data: jornada, isLoading } = useJornadaDeHoy(localId)
   const { data: historico } = useUltimasJornadas(localId)
   const abrir = useAbrirJornada(localId)
@@ -68,6 +87,7 @@ function Jornada({ localId }: { localId?: string }) {
   const { data: plan } = usePlanAppcc(localId)
 
   const [cerrando, setCerrando] = useState(false)
+  useEffect(() => { if (abrirCierre) { setCerrando(true); alConsumir?.() } }, [abrirCierre, alConsumir])
   const [total, setTotal] = useState('')
   const [tickets, setTickets] = useState('')
   const [origen, setOrigen] = useState<'csv' | 'foto' | 'total_dia'>('total_dia')
@@ -349,13 +369,16 @@ function Appcc({ localId }: { localId?: string }) {
 
 // ============================ MERMAS ============================
 
-function Mermas({ localId }: { localId?: string }) {
+function Mermas({ localId, abrirAlta, alConsumir }: {
+  localId?: string; abrirAlta?: boolean; alConsumir?: () => void
+}) {
   const { data: mermas, isLoading } = useMermasDeHoy(localId)
   const { data: productos } = useProductos(localId)
   const apuntar = useApuntarMerma(localId)
 
   const [abierta, setAbierta] = useState(false)
-  const [productoId, setProductoId] = useState('')
+  useEffect(() => { if (abrirAlta) { setAbierta(true); alConsumir?.() } }, [abrirAlta, alConsumir])
+  const [producto, setProducto] = useState<Producto | null>(null)
   const [cantidad, setCantidad] = useState('')
   const [motivo, setMotivo] = useState<string>('caducidad')
 
@@ -401,26 +424,33 @@ function Mermas({ localId }: { localId?: string }) {
           <Boton tono="discreto" onClick={() => setAbierta(false)}>Cancelar</Boton>
           <Boton
             cargando={apuntar.isPending}
+            disabled={!producto || !cantidad}
             onClick={async () => {
-              if (!cantidad) return
-              const p = (productos ?? []).find((x) => x.id === productoId)
+              if (!cantidad || !producto) return
               await apuntar.mutateAsync({
-                productoId: productoId || null,
-                nombre: p?.nombre ?? '',
+                productoId: producto.id,
+                nombre: producto.nombre,
                 cantidad: Number(cantidad.replace(',', '.')),
                 motivo,
               })
-              setAbierta(false); setCantidad(''); setProductoId('')
+              setAbierta(false); setCantidad(''); setProducto(null)
             }}
           >Apuntar</Boton>
         </>}>
         <div className="flex flex-col gap-4 pt-1">
-          <Selector etiqueta="Producto" obligatorio value={productoId} onChange={(e) => setProductoId(e.target.value)}>
-            <option value="">Elige</option>
-            {(productos ?? []).map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
-          </Selector>
-          <Campo etiqueta="Cantidad" obligatorio inputMode="decimal"
-            ayuda="En la unidad de uso del producto."
+          <BuscadorProducto
+            productos={productos ?? []}
+            elegido={producto}
+            onElegir={setProducto}
+            etiqueta="¿Qué se ha tirado?"
+            autoFocus
+          />
+          <Campo
+            etiqueta={producto
+              ? `Cantidad (${producto.unidad_uso === 'ud' ? 'unidades' : producto.unidad_uso === 'ml' ? 'mililitros' : 'gramos'})`
+              : 'Cantidad'}
+            obligatorio inputMode="decimal"
+            ayuda="Lo que se ha ido a la basura, no lo que queda."
             value={cantidad} onChange={(e) => setCantidad(e.target.value)} />
           <Selector etiqueta="Motivo" obligatorio value={motivo} onChange={(e) => setMotivo(e.target.value)}>
             {MOTIVOS.map(([k, n]) => <option key={k} value={k}>{n}</option>)}

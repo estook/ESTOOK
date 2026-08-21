@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, Navigate, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { Bell, ChevronDown, Grid2x2, LayoutDashboard, LogOut, Settings } from 'lucide-react'
 import { Isotipo, CaraFogon } from '@/marca/Logo'
@@ -6,6 +6,8 @@ import { Cargando, Insignia } from '@/componentes/Estado'
 import { APPS, Rueda } from '@/componentes/Rueda'
 import { useSesion } from '@/app/sesion'
 import { usePermisos, type Ambito } from '@/app/permisos'
+import { useLocal } from '@/datos/local'
+import { aplicarTema } from '@/marca/tema'
 import { Fogon } from '@/componentes/Fogon'
 
 const NOMBRE_PLAN: Record<string, string> = {
@@ -18,6 +20,10 @@ export function Marco() {
   const [fogon, setFogon] = useState(false)
   const { pathname } = useLocation()
   const { puedeVer } = usePermisos()
+  const { data: local } = useLocal(actual?.local_id)
+
+  // El color de la casa tiñe toda la app, no solo los documentos
+  useEffect(() => { aplicarTema(local?.color_secundario) }, [local?.color_secundario])
 
   /** Cada app pide un permiso; si el rol no lo tiene, no aparece. */
   const AMBITO_DE_APP: Record<string, Ambito> = {

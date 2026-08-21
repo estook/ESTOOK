@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Boxes, Plus, Search, Truck } from 'lucide-react'
 import { Boton } from '@/componentes/Boton'
 import { Campo } from '@/componentes/Campo'
@@ -27,8 +28,21 @@ type Pestana = 'productos' | 'proveedores' | 'pedidos'
 
 export function Inventario() {
   const { actual } = useSesion()
-  const [pestana, setPestana] = useState<Pestana>('productos')
+  const [params, setParams] = useSearchParams()
+  const [pestana, setPestana] = useState<Pestana>((params.get('tab') as Pestana) ?? 'productos')
   const local = actual?.local_id
+
+  /**
+   * El buscador no solo lleva a la pantalla: abre lo que has pedido. Llega como
+   * ?hacer=producto y aquí se ejecuta, dejando la dirección limpia después.
+   */
+  const hacer = params.get('hacer')
+  useEffect(() => {
+    const tab = params.get('tab') as Pestana | null
+    if (tab) setPestana(tab)
+    if (hacer === 'proveedor') setPestana('proveedores')
+    if (hacer === 'pedido') setPestana('pedidos')
+  }, [params, hacer])
 
   return (
     <div className="flex flex-col gap-4">
@@ -52,16 +66,24 @@ export function Inventario() {
         ))}
       </nav>
 
-      {pestana === 'productos' && <Productos localId={local} />}
-      {pestana === 'proveedores' && <Proveedores localId={local} />}
-      {pestana === 'pedidos' && <Pedidos localId={local} />}
+      {pestana === 'productos' && (
+        <Productos localId={local} abrirAlta={hacer === 'producto'} alConsumir={() => setParams({}, { replace: true })} />
+      )}
+      {pestana === 'proveedores' && (
+        <Proveedores localId={local} abrirAlta={hacer === 'proveedor'} alConsumir={() => setParams({}, { replace: true })} />
+      )}
+      {pestana === 'pedidos' && (
+        <Pedidos localId={local} abrirAlta={hacer === 'pedido'} alConsumir={() => setParams({}, { replace: true })} />
+      )}
     </div>
   )
 }
 
 // ============================ PRODUCTOS ============================
 
-function Productos({ localId }: { localId?: string }) {
+function Productos({ localId, abrirAlta, alConsumir }: {
+  localId?: string; abrirAlta?: boolean; alConsumir?: () => void
+}) {
   const { puedeVer, puedeEditar } = usePermisos()
   const conPrecios = puedeVer('inventario.precios')
   const puedeCrear = puedeEditar('inventario.productos')
@@ -73,6 +95,7 @@ function Productos({ localId }: { localId?: string }) {
   const [busca, setBusca] = useState('')
   const [ficha, setFicha] = useState<Producto | null>(null)
   const [nuevo, setNuevo] = useState(false)
+  useEffect(() => { if (abrirAlta) { setNuevo(true); alConsumir?.() } }, [abrirAlta, alConsumir])
   const [stockNuevo, setStockNuevo] = useState('')
   const [motivo, setMotivo] = useState('')
   const [editando, setEditando] = useState(false)
@@ -346,10 +369,13 @@ function Dato({ etiqueta, valor }: { etiqueta: string; valor: string }) {
 
 const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
 
-function Proveedores({ localId }: { localId?: string }) {
+function Proveedores({ localId, abrirAlta, alConsumir }: {
+  localId?: string; abrirAlta?: boolean; alConsumir?: () => void
+}) {
   const { data, isLoading } = useProveedores(localId)
   const guardar = useGuardarProveedor(localId)
   const [nuevo, setNuevo] = useState(false)
+  useEffect(() => { if (abrirAlta) { setNuevo(true); alConsumir?.() } }, [abrirAlta, alConsumir])
   const [editando, setEditando] = useState<Proveedor | null>(null)
   const [form, setForm] = useState<Partial<Proveedor> & { dias?: string[] }>({ dias: [] })
 

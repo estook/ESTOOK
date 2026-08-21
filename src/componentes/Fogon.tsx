@@ -38,8 +38,8 @@ export function Fogon({ abierto, onCerrar, pantalla }: { abierto: boolean; onCer
         setTurnos((t) => [...t, { de: 'fogon', texto: r.respuesta || 'No he podido contestar a eso.' }])
       }
     } catch (e) {
-      const bruto = e as { message?: string; context?: { status?: number } }
-      const codigo = bruto?.context?.status
+      const bruto = e as { message?: string; estado?: number; context?: { status?: number } }
+      const codigo = bruto?.estado ?? bruto?.context?.status
       setFallo(
         codigo === 401 || codigo === 403
           ? 'Fogón no reconoce tu sesión. Cierra sesión y vuelve a entrar.'
@@ -47,7 +47,9 @@ export function Fogon({ abierto, onCerrar, pantalla }: { abierto: boolean; onCer
             ? 'Falta la clave del modelo en los secretos de Supabase (AI_API_KEY).'
             : codigo === 404
               ? 'La función «fogon» no está publicada en Supabase.'
-              : `Fogón no ha contestado${bruto?.message ? `: ${bruto.message}` : ''}.`,
+              : bruto?.message
+                ? `Fogón: ${bruto.message}`
+                : 'Fogón no ha contestado.',
       )
     } finally {
       setPensando(false)

@@ -1,15 +1,13 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import {
-  Building2, Check, ChevronDown, CreditCard, History, ImagePlus, KeyRound,
-  LogOut, Palette, StickyNote, Target, Trash2,
+  Building2, Check, ChevronDown, CreditCard, ImagePlus, KeyRound,
+  LogOut, Palette, Trash2,
 } from 'lucide-react'
 import { Boton } from '@/componentes/Boton'
 import { Campo, Selector } from '@/componentes/Campo'
-import { Aviso, Cargando, Insignia } from '@/componentes/Estado'
+import { Aviso, Cargando } from '@/componentes/Estado'
 import { useSesion } from '@/app/sesion'
 import { leerLogoComoBase64, useGuardarLocal, useLocal, type Local } from '@/datos/local'
-import { useGuardarNota, useNotas, useBorrarNota } from '@/datos/notas'
-import { useAuditoria } from '@/datos/auditoria'
 import { usePermisos } from '@/app/permisos'
 
 const COLORES = [
@@ -61,6 +59,8 @@ function Bloque({
 
 export function Ajustes() {
   const { actual, salir } = useSesion()
+  const { puedeEditar } = usePermisos()
+  const puedeCambiarMarca = puedeEditar('ajustes.local') || actual?.rol === 'jefe_cocina'
   const { data: local, isLoading } = useLocal(actual?.local_id)
 
   if (isLoading) return <Cargando texto="Abriendo los ajustes" />
@@ -78,11 +78,7 @@ export function Ajustes() {
       </header>
 
       <DatosDelLocal local={local} />
-      <MarcaDelLocal local={local} />
-      <Objetivos local={local} />
-      <Notas localId={local.id} />
-
-      <Actividad localId={local.id} />
+      {puedeCambiarMarca && <MarcaDelLocal local={local} />}
 
       <Bloque icono={<CreditCard className="size-5" aria-hidden />} titulo="Plan y facturación"
         resumen={NOMBRE_PLAN[actual.plan] ?? actual.plan}>
@@ -146,7 +142,6 @@ function DatosDelLocal({ local }: { local: Local }) {
       icono={<Building2 className="size-5" aria-hidden />}
       titulo="Datos del local"
       resumen={[local.nombre, local.direccion].filter(Boolean).join(' · ')}
-      abiertoPorDefecto
     >
       {!editando ? (
         <>
@@ -322,123 +317,3 @@ function MarcaDelLocal({ local }: { local: Local }) {
   )
 }
 
-// ---------- Objetivos ----------
-
-function Objetivos({ local }: { local: Local }) {
-  return (
-    <Bloque icono={<Target className="size-5" aria-hidden />} titulo="Objetivos"
-      resumen="Materia prima, personal y margen">
-      <p className="text-sm text-tinta-suave">
-        Son los que ponen en verde o en rojo los semáforos de toda la app. Llegan con el módulo de
-        Negocio, junto con el prime cost y la desviación.
-      </p>
-      <p className="mt-2 text-xs text-tinta-tenue">Local: {local.nombre}</p>
-    </Bloque>
-  )
-}
-
-// ---------- Notas del local ----------
-
-function Notas({ localId }: { localId: string }) {
-  const { data: notas, isLoading } = useNotas(localId)
-  const guardar = useGuardarNota(localId)
-  const borrar = useBorrarNota(localId)
-  const [texto, setTexto] = useState('')
-
-  return (
-    <Bloque
-      icono={<StickyNote className="size-5" aria-hidden />}
-      titulo="Notas del local"
-      resumen={`${notas?.length ?? 0} nota(s) · Fogón las lee`}
-    >
-      <p className="text-sm text-tinta-suave">
-        Lo que quieras que no se olvide: acuerdos con proveedores, manías de la casa, avisos para el
-        equipo. Fogón las tiene en cuenta al aconsejar, y puede apuntar aquí lo que le digas.
-      </p>
-
-      <div className="mt-3 flex gap-2">
-        <input
-          className="h-11 min-w-0 flex-1 rounded-md border border-borde px-3 text-sm"
-          placeholder="Pescados Gil no reparte los lunes"
-          value={texto}
-          onChange={(e) => setTexto(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && texto.trim()) {
-              void guardar.mutateAsync({ texto: texto.trim() }); setTexto('')
-            }
-          }}
-        />
-        <Boton cargando={guardar.isPending}
-          onClick={() => { if (texto.trim()) { void guardar.mutateAsync({ texto: texto.trim() }); setTexto('') } }}>
-          Apuntar
-        </Boton>
-      </div>
-
-      {isLoading ? <Cargando /> : (
-        <ul className="mt-3 flex flex-col gap-2">
-          {(notas ?? []).map((n) => (
-            <li key={n.id} className="flex items-start gap-2 rounded-lg border border-borde bg-panel p-3">
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm">{n.texto}</span>
-                <span className="mt-0.5 block text-[11px] text-tinta-tenue">
-                  {new Date(n.creado_en).toLocaleDateString('es-ES')}
-                  {n.de_fogon && ' · apuntada por Fogón'}
-                </span>
-              </span>
-              {n.de_fogon && <Insignia tono="naranja">Fogón</Insignia>}
-              <button aria-label="Borrar nota" onClick={() => void borrar.mutateAsync(n.id)}
-                className="grid size-9 shrink-0 place-items-center rounded-md text-tinta-tenue hover:bg-lienzo">
-                <Trash2 className="size-4" aria-hidden />
-              </button>
-            </li>
-          ))}
-          {(notas ?? []).length === 0 && (
-            <li className="rounded-lg border border-dashed border-borde p-4 text-center text-sm text-tinta-tenue">
-              Todavía no hay ninguna nota.
-            </li>
-          )}
-        </ul>
-      )}
-    </Bloque>
-  )
-}
-
-// ---------- Actividad (auditoría) ----------
-
-function Actividad({ localId }: { localId: string }) {
-  const { puedeVer } = usePermisos()
-  const { data: registros, isLoading } = useAuditoria(localId)
-  if (!puedeVer('negocio.auditoria')) return null
-
-  return (
-    <Bloque icono={<History className="size-5" aria-hidden />} titulo="Actividad del local"
-      resumen="Quién ha tocado qué y cuándo">
-      <p className="text-sm text-tinta-suave">
-        Todo lo que toca dinero, permisos o registros legales queda aquí. No se puede editar ni
-        borrar: es el respaldo cuando algo no cuadra.
-      </p>
-      {isLoading ? <Cargando /> : (
-        <ul className="mt-3 flex flex-col gap-1.5">
-          {(registros ?? []).map((r) => (
-            <li key={r.id} className="flex items-start gap-2 rounded-lg border border-borde bg-panel px-3 py-2">
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm">{r.resumen ?? `${r.entidad} · ${r.accion}`}</span>
-                <span className="block text-[11px] text-tinta-tenue">
-                  {new Date(r.creado_en).toLocaleString('es-ES', {
-                    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
-                  })}
-                  {r.de_fogon && ' · Fogón'}
-                </span>
-              </span>
-            </li>
-          ))}
-          {(registros ?? []).length === 0 && (
-            <li className="rounded-lg border border-dashed border-borde p-4 text-center text-sm text-tinta-tenue">
-              Todavía no hay actividad registrada.
-            </li>
-          )}
-        </ul>
-      )}
-    </Bloque>
-  )
-}

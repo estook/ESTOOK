@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { ChefHat, Plus, Trash2, UtensilsCrossed, Eye, EyeOff } from 'lucide-react'
 import { Boton } from '@/componentes/Boton'
 import { Campo, Selector } from '@/componentes/Campo'
@@ -8,6 +9,7 @@ import { Aviso, Cargando, Insignia, Vacio } from '@/componentes/Estado'
 import { Tarjeta } from '@/componentes/Tarjeta'
 import { useSesion } from '@/app/sesion'
 import { euros, useProductos, type Producto } from '@/datos/despensa'
+import { BuscadorProducto } from '@/componentes/BuscadorProducto'
 import { BotonDocumento } from '@/documentos/BotonDocumento'
 import { cartaCompleta, fichaTecnica } from '@/documentos/plantillas'
 import {
@@ -21,7 +23,16 @@ const MARGEN_OBJETIVO = 70
 
 export function Cocina() {
   const { actual } = useSesion()
-  const [pestana, setPestana] = useState<'fichas' | 'carta'>('fichas')
+  const [params, setParams] = useSearchParams()
+  const [pestana, setPestana] = useState<'fichas' | 'carta'>(
+    (params.get('tab') as 'fichas' | 'carta') ?? 'fichas',
+  )
+  const hacer = params.get('hacer')
+
+  useEffect(() => {
+    const tab = params.get('tab')
+    if (tab === 'carta' || tab === 'fichas') setPestana(tab)
+  }, [params])
 
   return (
     <div className="flex flex-col gap-4">
@@ -44,7 +55,10 @@ export function Cocina() {
         ))}
       </nav>
 
-      {pestana === 'fichas' ? <Fichas localId={actual?.local_id} rol={actual?.rol} /> : <Carta localId={actual?.local_id} />}
+      {pestana === 'fichas'
+        ? <Fichas localId={actual?.local_id} rol={actual?.rol}
+            abrirAlta={hacer === 'ficha'} alConsumir={() => setParams({}, { replace: true })} />
+        : <Carta localId={actual?.local_id} />}
     </div>
   )
 }
@@ -53,13 +67,16 @@ export function Cocina() {
 
 const SIN_IMPORTES = ['cocinero', 'sala']
 
-function Fichas({ localId, rol }: { localId?: string; rol?: string }) {
+function Fichas({ localId, rol, abrirAlta, alConsumir }: {
+  localId?: string; rol?: string; abrirAlta?: boolean; alConsumir?: () => void
+}) {
   const { data: platos, isLoading } = usePlatos(localId)
   const { data: productos } = useProductos(localId)
   const guardar = useGuardarPlato(localId)
 
   const [abierta, setAbierta] = useState<Plato | null>(null)
   const [nueva, setNueva] = useState(false)
+  useEffect(() => { if (abrirAlta) { setNueva(true); alConsumir?.() } }, [abrirAlta, alConsumir])
   const [form, setForm] = useState<Partial<Plato>>({ iva: 10 })
   const [verImportes, setVerImportes] = useState(true)
 
@@ -162,7 +179,7 @@ function FichaAbierta({
   const borrar = useBorrarIngrediente(plato?.id)
   const guardar = useGuardarPlato(localId)
 
-  const [productoId, setProductoId] = useState('')
+  const [ingrediente, setIngrediente] = useState<Producto | null>(null)
   const [gramos, setGramos] = useState('')
   const [editando, setEditando] = useState(false)
   const [datos, setDatos] = useState({ nombre: '', familia: '', precio: '', iva: '10' })
@@ -275,25 +292,36 @@ function FichaAbierta({
             </ul>
           )}
 
-          <div className="mt-3 grid grid-cols-[1fr,90px,auto] items-end gap-2">
-            <Selector etiqueta="Añadir" value={productoId} onChange={(e) => setProductoId(e.target.value)}>
-              <option value="">Elige producto</option>
-              {productos.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
-            </Selector>
-            <Campo etiqueta="Cantidad" inputMode="decimal" value={gramos} onChange={(e) => setGramos(e.target.value)} />
-            <Boton
-              cargando={anadir.isPending}
-              onClick={async () => {
-                if (!productoId || !gramos) return
-                await anadir.mutateAsync({ productoId, cantidad: Number(gramos.replace(',', '.')) })
-                setProductoId(''); setGramos('')
-              }}
-            >
-              <Plus className="size-4" aria-hidden />
-            </Boton>
+          <div className="mt-3 flex flex-col gap-3">
+            <BuscadorProducto
+              productos={productos}
+              elegido={ingrediente}
+              onElegir={setIngrediente}
+              etiqueta="Añadir ingrediente"
+            />
+            <div className="grid grid-cols-[1fr,auto] items-end gap-2">
+              <Campo
+                etiqueta={ingrediente
+                  ? `Cantidad por ración (${ingrediente.unidad_uso === 'ud' ? 'unidades' : ingrediente.unidad_uso === 'ml' ? 'ml' : 'gramos'})`
+                  : 'Cantidad por ración'}
+                inputMode="decimal" placeholder="180"
+                value={gramos} onChange={(e) => setGramos(e.target.value)} />
+              <Boton
+                cargando={anadir.isPending}
+                disabled={!ingrediente || !gramos}
+                onClick={async () => {
+                  if (!ingrediente || !gramos) return
+                  await anadir.mutateAsync({ productoId: ingrediente.id, cantidad: Number(gramos.replace(',', '.')) })
+                  setIngrediente(null); setGramos('')
+                }}
+              >
+                <Plus className="size-4" aria-hidden /> Añadir
+              </Boton>
+            </div>
           </div>
           <p className="mt-2 text-xs text-tinta-tenue">
-            La cantidad va en la unidad de uso del producto (gramos, mililitros o unidades).
+            En una ficha se racionan gramos y mililitros: es la única parte de la app donde se
+            trabaja en pequeño.
           </p>
         </Tarjeta>
 

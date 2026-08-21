@@ -10,7 +10,11 @@
 
 @layer base {
   :root {
-    /* El color secundario del local se inyecta aquí en tiempo de ejecución. */
+    /* Color de marca del local, en canales RGB para poder usar transparencias.
+       Se sobrescribe al cargar el local; por defecto, el naranja de Estook. */
+    --marca: 255 122 0;
+    --marca-oscuro: 229 109 0;
+    --marca-suave: 255 241 227;
     --color-local: #ff7a00;
     color-scheme: light; /* El modo oscuro del móvil no repinta la app. */
   }

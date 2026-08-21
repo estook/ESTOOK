@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ClipboardList, Copy, Plus, Send, Trash2, Truck } from 'lucide-react'
 import { Boton } from '@/componentes/Boton'
 import { Campo, Selector } from '@/componentes/Campo'
@@ -57,7 +57,9 @@ function textoDelPedido({
   ].filter((x, i, a) => !(x === '' && a[i - 1] === '')).join('\n')
 }
 
-export function Pedidos({ localId }: { localId?: string }) {
+export function Pedidos({ localId, abrirAlta, alConsumir }: {
+  localId?: string; abrirAlta?: boolean; alConsumir?: () => void
+}) {
   const { data: pedidos, isLoading } = usePedidos(localId)
   const { data: proveedores } = useProveedores(localId)
   const { data: productos } = useProductos(localId)
@@ -74,6 +76,7 @@ export function Pedidos({ localId }: { localId?: string }) {
   const [recibiendo, setRecibiendo] = useState<string | null>(null)
   const [albaran, setAlbaran] = useState('')
   const [copiado, setCopiado] = useState(false)
+  useEffect(() => { if (abrirAlta) { setNuevo(true); alConsumir?.() } }, [abrirAlta, alConsumir])
   const [pestana, setPestana] = useState<'borrador' | 'enviado' | 'recibido'>('borrador')
   const [borradorId, setBorradorId] = useState<string | null>(null)
 
