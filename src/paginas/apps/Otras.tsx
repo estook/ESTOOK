@@ -2,9 +2,7 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { BarChart3, CalendarClock, MessageSquare, Star, Store } from 'lucide-react'
 import { Tarjeta } from '@/componentes/Tarjeta'
-import { Boton } from '@/componentes/Boton'
 import { Insignia } from '@/componentes/Estado'
-import { useSesion } from '@/app/sesion'
 
 function Cabecera({ icono, titulo, texto }: { icono: ReactNode; titulo: string; texto: string }) {
   return (
@@ -108,25 +106,3 @@ export function Chat() {
   )
 }
 
-export function Ajustes() {
-  const { actual, salir } = useSesion()
-  return (
-    <div className="flex flex-col gap-4">
-      <Cabecera icono={<span />} titulo="Ajustes" texto="Tu local, tus apps, tus objetivos y tu acceso." />
-      <Tarjeta titulo="Este local">
-        <dl className="grid gap-2 sm:grid-cols-2">
-          {[['Local', actual?.local ?? '—'], ['Tu rol', (actual?.rol ?? '—').replace('_', ' ')],
-            ['Plan', actual?.plan ?? '—'], ['Identificador', actual?.local_id.slice(0, 8) ?? '—']].map(([k, v]) => (
-            <div key={k} className="rounded-lg border border-borde bg-panel p-3">
-              <dt className="text-xs font-semibold uppercase tracking-wide text-tinta-tenue">{k}</dt>
-              <dd className="mt-0.5 font-semibold capitalize">{v}</dd>
-            </div>
-          ))}
-        </dl>
-      </Tarjeta>
-      <Tarjeta titulo="Mi acceso">
-        <Boton tono="discreto" onClick={() => void salir()}>Cerrar sesión</Boton>
-      </Tarjeta>
-    </div>
-  )
-}

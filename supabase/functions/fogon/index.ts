@@ -126,11 +126,17 @@ Deno.serve(async (req) => {
     // Contexto: resumen vivo del local (+ perfil, si el gasto no aprieta)
     const { data: ctx } = await sb.from('contexto_local')
       .select('resumen_dia, perfil_negocio').eq('local_id', local_id).maybeSingle()
+
+    // Notas del local: acuerdos y manías de la casa que no caben en ningún campo
+    const { data: notas } = await sb.from('notas')
+      .select('texto').eq('local_id', local_id).order('creado_en', { ascending: false }).limit(15)
+    const apuntes = (notas ?? []).map((n: { texto: string }) => `· ${n.texto}`).join('\n')
     const contexto = [
       `Local: ${local.nombre ?? ''}. Hablas con un ${String(miembro.rol).replace('_', ' ')}.`,
       pantalla ? `Está en la pantalla: ${String(pantalla).slice(0, 80)}.` : '',
       ctx?.resumen_dia ?? 'Sin resumen del día todavía.',
       apretado ? '' : (ctx?.perfil_negocio ?? ''),
+      apuntes ? `NOTAS DEL LOCAL (tenlas en cuenta):\n${apuntes}` : '',
     ].filter(Boolean).join('\n\n')
 
     const clave = Deno.env.get('AI_API_KEY')
