@@ -125,7 +125,7 @@ export function Inicio() {
           <Aparece desde="escala" retraso={200}>
             <div ref={heroRef} className="relative">
               <div className="absolute inset-x-8 top-10 -z-10 h-72 rounded-[40px] bg-naranja/25 blur-3xl" />
-              <MockPanel />
+              <MockPanel mitad />
             </div>
           </Aparece>
         </div>

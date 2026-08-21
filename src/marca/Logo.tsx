@@ -19,7 +19,7 @@ export function Logotipo({ conClaim = true, className = '' }: { conClaim?: boole
     <img
       src={`${RUTA}marca/estook-logo.png`}
       alt="Estook · Tu cocina, bajo control."
-      className={`${conClaim ? 'h-11' : 'h-8'} w-auto object-contain object-left ${className}`}
+      className={`${conClaim ? 'h-12 md:h-14' : 'h-[38px] md:h-11'} w-auto object-contain object-left ${className}`}
     />
   )
 }

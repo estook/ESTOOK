@@ -7,9 +7,19 @@ import { CaraFogon } from '@/marca/Logo'
  * con ellos: son una foto, no la app.
  */
 
-export function Telefono({ children, etiqueta }: { children: ReactNode; etiqueta?: string }) {
+export function Telefono({ children, etiqueta, mitad }: {
+  children: ReactNode
+  etiqueta?: string
+  /**
+   * En móvil no caben el texto, los botones y el teléfono entero. Con `mitad`
+   * se enseña solo la parte de arriba, difuminada hacia abajo: se entiende
+   * igual y deja sitio a lo que hay que leer.
+   */
+  mitad?: boolean
+}) {
   return (
-    <div className="pointer-events-none relative mx-auto w-[248px] select-none">
+    <div className={`pointer-events-none relative mx-auto w-[248px] select-none ${
+      mitad ? 'max-h-[240px] overflow-hidden md:max-h-none' : ''}`}>
       <div className="rounded-[30px] border-[7px] border-tinta bg-tinta text-tinta shadow-[0_24px_60px_-20px_rgba(17,28,31,0.45)]">
         <div className="relative overflow-hidden rounded-[23px] bg-panel">
           <div className="flex h-7 items-center justify-between bg-lienzo px-3 text-[8px] font-semibold text-tinta-tenue">
@@ -29,6 +39,9 @@ export function Telefono({ children, etiqueta }: { children: ReactNode; etiqueta
           </div>
         </div>
       </div>
+      {mitad && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-panel to-transparent md:hidden" />
+      )}
       {etiqueta && (
         <p className="mt-3 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-tinta-tenue">
           {etiqueta}
@@ -57,9 +70,9 @@ const Fila = ({ a, b, tono }: { a: string; b: string; tono?: 'ok' | 'alerta' | '
 )
 
 // ---------- Panel ----------
-export function MockPanel() {
+export function MockPanel({ mitad }: { mitad?: boolean } = {}) {
   return (
-    <Telefono>
+    <Telefono mitad={mitad}>
       <div className="bg-lienzo px-3 py-2.5">
         <p className="font-titulo text-sm font-semibold">Buenas tardes, Marta</p>
         <p className="text-[9px] text-tinta-tenue">Jueves, 12 de junio · Casa Marta</p>
@@ -100,9 +113,9 @@ export function MockPanel() {
 }
 
 // ---------- Inventario ----------
-export function MockInventario() {
+export function MockInventario({ mitad }: { mitad?: boolean } = {}) {
   return (
-    <Telefono>
+    <Telefono mitad={mitad}>
       <Barra titulo="Inventario · Productos" accion="PDF" />
       <div className="bg-lienzo">
         <Fila a="Pulpo cocido" b="4,2 kg" />
@@ -133,9 +146,9 @@ export function MockInventario() {
 }
 
 // ---------- Escandallo ----------
-export function MockEscandallo() {
+export function MockEscandallo({ mitad }: { mitad?: boolean } = {}) {
   return (
-    <Telefono>
+    <Telefono mitad={mitad}>
       <Barra titulo="Cocina · Pulpo a la brasa" accion="PDF" />
       <div className="grid grid-cols-2 gap-1.5 p-3">
         {[['Coste', '4,182 €'], ['Precio', '19,50 €'], ['Base sin IVA', '17,73 €'], ['Margen', '76,4 %']].map(([t, v], i) => (
@@ -159,9 +172,9 @@ export function MockEscandallo() {
 }
 
 // ---------- Cuadrante ----------
-export function MockCuadrante() {
+export function MockCuadrante({ mitad }: { mitad?: boolean } = {}) {
   return (
-    <Telefono>
+    <Telefono mitad={mitad}>
       <Barra titulo="Equipo · Semana del 17" accion="PDF" />
       <div className="bg-lienzo">
         <Fila a="Luis · jueves" b="12-16 · 20-23" />
@@ -183,9 +196,9 @@ export function MockCuadrante() {
 }
 
 // ---------- APPCC ----------
-export function MockAppcc() {
+export function MockAppcc({ mitad }: { mitad?: boolean } = {}) {
   return (
-    <Telefono>
+    <Telefono mitad={mitad}>
       <Barra titulo="Servicio · APPCC" accion="PDF" />
       <div className="bg-lienzo">
         <Fila a="Cámara de pescado" b="2,8 °C" tono="ok" />
@@ -208,9 +221,9 @@ export function MockAppcc() {
 }
 
 // ---------- Competencia ----------
-export function MockCompetencia() {
+export function MockCompetencia({ mitad }: { mitad?: boolean } = {}) {
   return (
-    <Telefono>
+    <Telefono mitad={mitad}>
       <Barra titulo="Competencia · tu zona" />
       <div className="bg-lienzo">
         <Fila a="Casa Manolo · 180 m" b="14,50 € · 4,3" />

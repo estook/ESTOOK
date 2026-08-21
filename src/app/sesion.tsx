@@ -8,6 +8,10 @@ export interface Acceso {
   rol: string
   plan: string
   cuenta_id: string
+  /** Lo decide el servidor, no la app: sin esto no se entra. */
+  conAcceso: boolean
+  estadoPago: string
+  pruebaTerminaEn: string | null
 }
 
 interface Estado {
@@ -41,22 +45,26 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
     if (!supabase || !sesion) { setAccesos([]); setActual(null); return }
     let vivo = true
     ;(async () => {
-      const { data } = await supabase!
-        .from('miembros')
-        .select('local_id, rol, locales(nombre, cuenta_id, cuentas(plan))')
-        .eq('persona_id', sesion.user.id)
-        .eq('activo', true)
+      /**
+       * El estado de la cuenta lo calcula el servidor con una función propia:
+       * así la app no puede «decidir» que tiene acceso, solo obedecer.
+       */
+      const { data: estados } = await supabase!.rpc('mi_estado_de_cuenta')
       if (!vivo) return
-      const lista: Acceso[] = (data ?? []).map((m) => {
-        const l = m.locales as unknown as { nombre: string; cuenta_id: string; cuentas: { plan: string } | null }
-        return {
-          local_id: m.local_id as string,
-          rol: m.rol as string,
-          local: l?.nombre ?? 'Mi local',
-          cuenta_id: l?.cuenta_id ?? '',
-          plan: l?.cuentas?.plan ?? 'prueba',
-        }
-      })
+
+      const lista: Acceso[] = ((estados ?? []) as {
+        local_id: string; local: string; rol: string; plan: string
+        estado_pago: string; prueba_termina_en: string | null; con_acceso: boolean
+      }[]).map((e) => ({
+        local_id: e.local_id,
+        local: e.local ?? 'Mi local',
+        rol: e.rol,
+        plan: e.plan ?? 'prueba',
+        cuenta_id: '',
+        conAcceso: Boolean(e.con_acceso),
+        estadoPago: e.estado_pago ?? 'al_dia',
+        pruebaTerminaEn: e.prueba_termina_en,
+      }))
       setAccesos(lista)
       const guardado = localStorage.getItem('estook.local')
       setActual(lista.find((a) => a.local_id === guardado) ?? lista[0] ?? null)

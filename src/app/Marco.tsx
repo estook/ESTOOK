@@ -9,6 +9,7 @@ import { usePermisos, type Ambito } from '@/app/permisos'
 import { useLocal } from '@/datos/local'
 import { aplicarTema } from '@/marca/tema'
 import { Fogon } from '@/componentes/Fogon'
+import { SinPlan } from '@/paginas/SinPlan'
 
 const NOMBRE_PLAN: Record<string, string> = {
   prueba: 'Prueba', base: 'Base', pro: 'Pro', grupo: 'Grupo', a_medida: 'A medida',
@@ -44,6 +45,10 @@ export function Marco() {
 
   if (cargando) return <div className="grid min-h-full place-items-center"><Cargando texto="Abriendo tu local" /></div>
   if (!sesion) return <Navigate to="/entrar" replace />
+
+  // Sin plan vigente no se entra. El servidor tampoco devuelve datos en ese
+  // estado, así que esto es la cara visible de un candado que está en la base.
+  if (accesos.length > 0 && !accesos.some((a) => a.conAcceso)) return <SinPlan />
 
   return (
     <div className="flex min-h-full flex-col bg-panel">

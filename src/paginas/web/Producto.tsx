@@ -56,7 +56,11 @@ export function Producto() {
             ))}
           </div>
 
-          <div className="mt-10 grid items-start gap-10 md:grid-cols-[1fr_auto]">
+          <div className="mt-10 grid items-start gap-8 md:grid-cols-[1fr_auto] md:gap-10">
+            <div key={`mm-${actual.clave}`} className="animate-subirCorto md:hidden">
+              <Mock mitad />
+            </div>
+
             <div key={actual.clave} className="animate-subirCorto">
               <h2 className="font-titulo text-2xl font-semibold leading-tight md:text-[2rem]">
                 {actual.titulo}
@@ -91,7 +95,7 @@ export function Producto() {
               </Link>
             </div>
 
-            <div key={`m-${actual.clave}`} className="mx-auto animate-subirCorto md:sticky md:top-24">
+            <div key={`m-${actual.clave}`} className="mx-auto hidden animate-subirCorto md:sticky md:top-24 md:block">
               <Mock />
             </div>
           </div>
