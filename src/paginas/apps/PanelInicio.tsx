@@ -250,7 +250,7 @@ export function PanelInicio() {
       <button
         onClick={() => setAcciones(true)}
         aria-label="Acción rápida"
-        className="fixed bottom-24 right-4 z-30 flex items-center gap-2 rounded-full bg-naranja px-5 py-3 font-semibold text-white shadow-flotante lg:bottom-8"
+        className="fixed bottom-24 right-4 z-30 flex items-center gap-2 rounded-full bg-naranja px-5 py-3.5 font-semibold text-white shadow-flotante lg:bottom-8"
       >
         <Plus className="size-5" aria-hidden /> Acción rápida
       </button>

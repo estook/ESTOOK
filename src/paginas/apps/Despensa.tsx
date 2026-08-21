@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Boxes, Plus, Search, Truck } from 'lucide-react'
 import { Boton } from '@/componentes/Boton'
-import { Campo, Selector } from '@/componentes/Campo'
+import { Campo } from '@/componentes/Campo'
 import { Hoja } from '@/componentes/Hoja'
 import { Tabla, type Columna } from '@/componentes/Tabla'
 import { Aviso, Cargando, Insignia, Vacio } from '@/componentes/Estado'
@@ -14,11 +14,11 @@ import {
   type Producto, type Proveedor,
 } from '@/datos/despensa'
 import {
-  FORMATOS, GRANDE, MERMAS_HABITUALES, PEQUENA,
-  aGrande, aPequena, mostrar, resumenDeCompra,
-  type UnidadGrande,
+  GRANDE, MERMAS_HABITUALES,
+  aGrande, aPequena, mostrar,
 } from '@/datos/unidades'
 import { Pedidos } from '@/paginas/apps/Pedidos'
+import { AsistenteProducto } from '@/paginas/apps/AsistenteProducto'
 
 type Pestana = 'productos' | 'proveedores' | 'pedidos'
 
@@ -58,27 +58,6 @@ export function Despensa() {
 
 // ============================ PRODUCTOS ============================
 
-const CATEGORIAS = ['Carne', 'Pescado', 'Verdura', 'Fruta', 'Lácteos', 'Congelados',
-  'Secos y conservas', 'Panadería', 'Aceites', 'Bebidas', 'Vinos', 'Limpieza', 'Desechables']
-
-interface Formulario {
-  nombre: string
-  categoria: string
-  formato: string
-  contenido: string
-  unidad: UnidadGrande
-  precio: string
-  rendimiento: number
-  stock: string
-  minimo: string
-  proveedorId: string
-}
-
-const FORM_VACIO: Formulario = {
-  nombre: '', categoria: '', formato: 'Caja', contenido: '', unidad: 'kg',
-  precio: '', rendimiento: 1, stock: '', minimo: '', proveedorId: '',
-}
-
 function Productos({ localId }: { localId?: string }) {
   const { data: productos, isLoading, error } = useProductos(localId)
   const { data: proveedores } = useProveedores(localId)
@@ -88,7 +67,6 @@ function Productos({ localId }: { localId?: string }) {
   const [busca, setBusca] = useState('')
   const [ficha, setFicha] = useState<Producto | null>(null)
   const [nuevo, setNuevo] = useState(false)
-  const [f, setF] = useState<Formulario>(FORM_VACIO)
   const [stockNuevo, setStockNuevo] = useState('')
   const [motivo, setMotivo] = useState('')
   const [editando, setEditando] = useState(false)
@@ -122,34 +100,6 @@ function Productos({ localId }: { localId?: string }) {
       return `${euros(aPequena(c, p.unidad_uso as 'g' | 'ml' | 'ud'))}/${grande}`
     } },
   ]
-
-  const resumen = resumenDeCompra({
-    formato: f.formato,
-    contenido: Number(f.contenido.replace(',', '.')) || 0,
-    unidad: f.unidad,
-    precio: f.precio ? Number(f.precio.replace(',', '.')) : null,
-    rendimiento: f.rendimiento,
-  })
-
-  async function crear() {
-    if (!f.nombre.trim() || !f.contenido) return
-    const unidadUso = PEQUENA[f.unidad]
-    const contenido = Number(f.contenido.replace(',', '.'))
-    await guardar.mutateAsync({
-      nombre: f.nombre.trim(),
-      categoria: f.categoria || null,
-      unidad_compra: `${f.formato} de ${f.contenido} ${f.unidad}`,
-      unidad_uso: unidadUso,
-      factor: aPequena(contenido, unidadUso),          // cuántos g/ml/ud trae el formato
-      rendimiento: f.rendimiento || 1,          // 0 = «ya lo diré»: se guarda 1 y queda pendiente
-      stock_actual: f.stock ? aPequena(Number(f.stock.replace(',', '.')), unidadUso) : 0,
-      minimo: f.minimo ? aPequena(Number(f.minimo.replace(',', '.')), unidadUso) : null,
-      precio_ultimo: f.precio ? Number(f.precio.replace(',', '.')) : null,
-      proveedor_id: f.proveedorId || null,
-    })
-    setNuevo(false)
-    setF(FORM_VACIO)
-  }
 
   async function corregirStock() {
     if (!ficha || stockNuevo === '') return
@@ -320,97 +270,16 @@ function Productos({ localId }: { localId?: string }) {
         })()}
       </Hoja>
 
-      {/* ---------- Alta de producto, guiada ---------- */}
-      <Hoja
-        abierta={nuevo}
-        titulo="Nuevo producto"
-        descripcion="Cuatro preguntas. Con eso Estook sabe lo que te cuesta cada kilo de verdad."
+      <AsistenteProducto
+        abierto={nuevo}
         onCerrar={() => setNuevo(false)}
-        pie={<>
-          <Boton tono="discreto" onClick={() => setNuevo(false)}>Cancelar</Boton>
-          <Boton onClick={() => void crear()} cargando={guardar.isPending}
-            disabled={!f.nombre.trim() || !f.contenido}>Dar de alta</Boton>
-        </>}
-      >
-        <div className="flex flex-col gap-6 pt-1">
-          <Bloque numero={1} titulo="¿Qué producto es?">
-            <Campo etiqueta="Nombre" obligatorio placeholder="Atún"
-              value={f.nombre} onChange={(e) => setF({ ...f, nombre: e.target.value })} />
-            <Selector etiqueta="Categoría" value={f.categoria}
-              onChange={(e) => setF({ ...f, categoria: e.target.value })}>
-              <option value="">Sin categoría</option>
-              {CATEGORIAS.map((c) => <option key={c}>{c}</option>)}
-            </Selector>
-          </Bloque>
-
-          <Bloque numero={2} titulo="¿Cómo lo compras?"
-            explicacion="El formato en el que te llega del proveedor y lo que trae dentro.">
-            <Selector etiqueta="Te llega en" obligatorio value={f.formato}
-              onChange={(e) => setF({ ...f, formato: e.target.value })}>
-              {FORMATOS.map((x) => <option key={x.clave} value={x.nombre}>{x.nombre}</option>)}
-            </Selector>
-            <div className="grid grid-cols-[1fr,110px] gap-3">
-              <Campo etiqueta="Cada uno trae" obligatorio inputMode="decimal" placeholder="3"
-                value={f.contenido} onChange={(e) => setF({ ...f, contenido: e.target.value })} />
-              <Selector etiqueta="Unidad" value={f.unidad}
-                onChange={(e) => setF({ ...f, unidad: e.target.value as UnidadGrande })}>
-                <option value="kg">kilos</option>
-                <option value="l">litros</option>
-                <option value="ud">unidades</option>
-              </Selector>
-            </div>
-            <Campo etiqueta={`Precio de 1 ${f.formato.toLowerCase()}`} inputMode="decimal" placeholder="42,00"
-              ayuda="Sin IVA, como viene en el albarán. Si aún no lo sabes, déjalo vacío."
-              value={f.precio} onChange={(e) => setF({ ...f, precio: e.target.value })} />
-          </Bloque>
-
-          <Bloque numero={3} titulo="¿Se limpia antes de usarlo?"
-            explicacion="Lo que se va en espinas, piel o recortes. Es lo que hace que el kilo útil cueste más que el comprado.">
-            <div className="flex flex-wrap gap-2">
-              <button type="button"
-                onClick={() => setF({ ...f, rendimiento: 0 })}
-                className={`rounded-md border px-3 py-2 text-sm font-semibold transition-colors ${
-                  f.rendimiento === 0
-                    ? 'border-naranja bg-naranja text-white'
-                    : 'border-borde bg-lienzo text-tinta-suave hover:bg-panel'}`}>
-                Pregúntamelo cuando lo reciba
-              </button>
-              {MERMAS_HABITUALES.map((m) => (
-                <button key={m.texto} type="button"
-                  onClick={() => setF({ ...f, rendimiento: m.rendimiento })}
-                  className={`rounded-md border px-3 py-2 text-sm font-semibold transition-colors ${
-                    f.rendimiento === m.rendimiento
-                      ? 'border-naranja bg-naranja text-white'
-                      : 'border-borde bg-lienzo text-tinta-suave hover:bg-panel'}`}>
-                  {m.texto}
-                </button>
-              ))}
-            </div>
-          </Bloque>
-
-          <Bloque numero={4} titulo="¿Cuánto tienes y cuándo hay que pedir?"
-            explicacion={`En ${f.unidad === 'ud' ? 'unidades' : f.unidad === 'l' ? 'litros' : 'kilos'}, como lo cuentas en la cámara.`}>
-            <div className="grid grid-cols-2 gap-3">
-              <Campo etiqueta={`Hay ahora (${f.unidad})`} inputMode="decimal"
-                value={f.stock} onChange={(e) => setF({ ...f, stock: e.target.value })} />
-              <Campo etiqueta={`Avisar por debajo de (${f.unidad})`} inputMode="decimal"
-                value={f.minimo} onChange={(e) => setF({ ...f, minimo: e.target.value })} />
-            </div>
-            <Selector etiqueta="Proveedor habitual" value={f.proveedorId}
-              onChange={(e) => setF({ ...f, proveedorId: e.target.value })}>
-              <option value="">Sin asignar</option>
-              {(proveedores ?? []).map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
-            </Selector>
-          </Bloque>
-
-          {resumen && (
-            <div className="rounded-lg border border-naranja/30 bg-naranja-suave p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-naranja-oscuro">Así queda</p>
-              <p className="mt-1 text-sm font-medium">{resumen}</p>
-            </div>
-          )}
-        </div>
-      </Hoja>
+        guardando={guardar.isPending}
+        proveedores={proveedores ?? []}
+        onGuardar={async (d) => {
+          await guardar.mutateAsync(d)
+          setNuevo(false)
+        }}
+      />
     </div>
   )
 }
