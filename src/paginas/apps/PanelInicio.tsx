@@ -64,17 +64,6 @@ export function PanelInicio() {
   const [confirmar, setConfirmar] = useState<'abrir' | 'cerrar' | null>(null)
   const [totalCierre, setTotalCierre] = useState('')
 
-  if (!actual) {
-    return (
-      <Aviso nivel="importante" titulo="Tu cuenta todavía no tiene local">
-        Si eres el dueño, ejecuta <code>alta.sql</code> y <code>admin.sql</code> en el editor SQL de
-        Supabase. Si trabajas aquí, pide que te inviten.
-      </Aviso>
-    )
-  }
-
-  const lista = productos ?? []
-
   useEffect(() => {
     if (!actual?.local_id || isLoading) return
     const calculados = calcularAvisos({
@@ -90,6 +79,17 @@ export function PanelInicio() {
     // Se recalcula cuando cambian los datos, no en cada pintado
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [actual?.local_id, isLoading, productos, platos, pedidos, plan, registros, jornada])
+
+  if (!actual) {
+    return (
+      <Aviso nivel="importante" titulo="Tu cuenta todavía no tiene local">
+        Si eres el dueño, ejecuta <code>alta.sql</code> y <code>admin.sql</code> en el editor SQL de
+        Supabase. Si trabajas aquí, pide que te inviten.
+      </Aviso>
+    )
+  }
+
+  const lista = productos ?? []
   const appccPendiente = (plan?.puntos ?? []).filter((p) => !(registros ?? []).some((r) => r.punto_id === p.id))
 
   const tarjetas = (avisos ?? []).filter((a) => !a.app || puedeVer(
