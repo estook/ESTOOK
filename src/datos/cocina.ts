@@ -215,3 +215,28 @@ export function useGuardarPlatoDeCarta(localId?: string) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['carta', localId] }),
   })
 }
+
+
+/**
+ * Ingredientes de varios platos de una vez.
+ *
+ * El análisis de la carta necesita el escandallo de cada plato. Pedirlos uno a
+ * uno sería una consulta por plato; así van en una sola.
+ */
+export function useIngredientesDeVarios(platoIds: string[]) {
+  const clave = platoIds.slice().sort().join(',')
+  return useQuery({
+    queryKey: ['ingredientes-varios', clave],
+    enabled: platoIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await exigirSupabase()
+        .from('plato_ingredientes').select('*').in('plato_id', platoIds)
+      if (error) throw error
+      const porPlato = new Map<string, Ingrediente[]>()
+      for (const i of (data ?? []) as Ingrediente[]) {
+        porPlato.set(i.plato_id, [...(porPlato.get(i.plato_id) ?? []), i])
+      }
+      return porPlato
+    },
+  })
+}

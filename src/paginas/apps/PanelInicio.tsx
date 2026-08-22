@@ -11,7 +11,7 @@ import { Buscador } from '@/componentes/Buscador'
 import { WidgetsDelPanel } from '@/paginas/apps/Widgets'
 import { useSesion } from '@/app/sesion'
 import { euros, usePedidos, useProductos } from '@/datos/despensa'
-import { usePlatos } from '@/datos/cocina'
+import { useIngredientesDeVarios, usePlatos } from '@/datos/cocina'
 import {
   useAbrirJornada, useCerrarJornada, useJornadaDeHoy, usePlanAppcc, useRegistrosDeHoy,
 } from '@/datos/servicio'
@@ -49,6 +49,7 @@ export function PanelInicio() {
   const { data: productos, isLoading } = useProductos(actual?.local_id)
   const { data: pedidos } = usePedidos(actual?.local_id)
   const { data: platos } = usePlatos(actual?.local_id)
+  const { data: ingredientesPorPlato } = useIngredientesDeVarios((platos ?? []).map((p) => p.id))
   const { data: jornada } = useJornadaDeHoy(actual?.local_id)
   const { data: plan } = usePlanAppcc(actual?.local_id)
   const { data: registros } = useRegistrosDeHoy(actual?.local_id)
@@ -70,6 +71,7 @@ export function PanelInicio() {
     const calculados = calcularAvisos({
       productos: productos ?? [],
       platos: platos ?? [],
+      ingredientesPorPlato,
       pedidos: pedidos ?? [],
       puntosAppcc: plan?.puntos ?? [],
       registrosAppcc: registros ?? [],
@@ -79,14 +81,20 @@ export function PanelInicio() {
     sincronizar.mutate(calculados)
     // Se recalcula cuando cambian los datos, no en cada pintado
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [actual?.local_id, isLoading, productos, platos, pedidos, plan, registros, jornada])
+  }, [actual?.local_id, isLoading, productos, platos, ingredientesPorPlato, pedidos, plan, registros, jornada])
 
   if (!actual) {
     return (
-      <Aviso nivel="importante" titulo="Tu cuenta todavía no tiene local">
-        Si eres el dueño, ejecuta <code>alta.sql</code> y <code>admin.sql</code> en el editor SQL de
-        Supabase. Si trabajas aquí, pide que te inviten.
-      </Aviso>
+      <div className="flex flex-col gap-4">
+        <Aviso nivel="importante" titulo="Todavía no tienes ningún local asociado">
+          Si acabas de crear la cuenta, cierra sesión y vuelve a entrar: el local se prepara en ese
+          momento. Si trabajas en un establecimiento que ya usa Estook, pide que te inviten desde
+          Equipo.
+        </Aviso>
+        <div>
+          <Boton tono="discreto" onClick={() => window.location.reload()}>Volver a comprobar</Boton>
+        </div>
+      </div>
     )
   }
 

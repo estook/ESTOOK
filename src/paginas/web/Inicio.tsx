@@ -6,7 +6,7 @@ import {
 import { CaraFogon } from '@/marca/Logo'
 import { Boton } from '@/componentes/Boton'
 import { MockPanel } from '@/paginas/Mockups'
-import { Aparece, Contador, useParalaje } from '@/paginas/efectos'
+import { Aparece, Cinta, Contador, useParalaje } from '@/paginas/efectos'
 import { MarcoWeb } from '@/paginas/web/MarcoWeb'
 
 const LO_QUE_HACE = [
@@ -131,11 +131,10 @@ export function Inicio() {
         </div>
 
         <div className="relative border-t border-white/10 bg-tinta/60 py-4">
-          <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-center gap-x-8 gap-y-2 px-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/40">
-            {['Inventario', 'Escandallos', 'Carta', 'Cuadrantes', 'Fichajes', 'Control sanitario', 'Ventas', 'Competencia'].map((t) => (
-              <span key={t}>{t}</span>
-            ))}
-          </div>
+          <Cinta elementos={[
+            'Inventario', 'Escandallos', 'Carta', 'Menú del día', 'Cuadrantes', 'Fichajes',
+            'Control sanitario', 'Cierre de caja', 'Ventas', 'Competencia', 'Reseñas', 'Documentos',
+          ]} />
         </div>
       </section>
 

@@ -15,7 +15,8 @@ import { cartaCompleta, fichaTecnica } from '@/documentos/plantillas'
 import {
   ETIQUETA_CATEGORIA, clasificar, escandallo, precioRecomendado,
   useBorrarIngrediente, useCarta, useGuardarIngrediente, useGuardarPlato,
-  useGuardarPlatoDeCarta, useGuardarSeccion, useIngredientes, usePlatos,
+  useGuardarPlatoDeCarta, useGuardarSeccion, useIngredientes,
+  useIngredientesDeVarios, usePlatos,
   type Plato,
 } from '@/datos/cocina'
 
@@ -408,16 +409,20 @@ function Carta({ localId }: { localId?: string }) {
   const [enSeccion, setEnSeccion] = useState<string | null>(null)
   const [platoId, setPlatoId] = useState('')
 
-  // Análisis de rentabilidad: se necesita coste y precio; las ventas llegarán con el TPV.
+  // Análisis de rentabilidad: hace falta el escandallo real de cada plato.
+  // Antes se calculaba con la lista de ingredientes vacía, así que el coste
+  // salía cero y todos los platos parecían tener el 100 % de margen.
+  const { data: ingredientesPorPlato } = useIngredientesDeVarios((platos ?? []).map((p) => p.id))
+
   const analisis = useMemo(() => {
     const lista = (platos ?? []).map((p) => {
-      const c = escandallo([], productos ?? [], p)
-      return { plato: p, margen: c.margen }
+      const c = escandallo(ingredientesPorPlato?.get(p.id) ?? [], productos ?? [], p)
+      return { plato: p, margen: c.margen, coste: c.costeTotal }
     })
     const conMargen = lista.filter((x) => x.margen != null) as { plato: Plato; margen: number }[]
     const margenMedio = conMargen.length ? conMargen.reduce((s, x) => s + x.margen, 0) / conMargen.length : 0
     return { lista, margenMedio }
-  }, [platos, productos])
+  }, [platos, productos, ingredientesPorPlato])
 
   if (isLoading) return <Cargando texto="Montando la carta" />
 
@@ -497,7 +502,12 @@ function Carta({ localId }: { localId?: string }) {
                   {s.carta_platos.sort((a, b) => a.orden - b.orden).map((cp) => {
                     const ficha = (platos ?? []).find((p) => p.id === cp.plato_id)
                     const dato = analisis.lista.find((x) => x.plato.id === cp.plato_id)
-                    const cat = clasificar(dato?.margen ?? null, 0, analisis.margenMedio, 0)
+                    // Sin escandallo no hay margen que valga: se marca como sin datos
+                    const conEscandallo = (dato?.coste ?? 0) > 0
+                    const cat = clasificar(
+                      conEscandallo ? dato?.margen ?? null : null,
+                      0, analisis.margenMedio, 0,
+                    )
                     const e = ETIQUETA_CATEGORIA[cat]
                     return (
                       <li key={cp.id} className="flex items-center justify-between gap-3 border-b border-borde py-2 last:border-0">

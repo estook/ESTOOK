@@ -172,3 +172,56 @@ export function TextoQueSeEnciende({ texto, className = '' }: { texto: string; c
     </p>
   )
 }
+
+/**
+ * Cinta que se desplaza sola. Se puede parar con el dedo o el ratón, y
+ * arrastrar para moverla más rápido. Si el sistema pide menos animación, se
+ * queda quieta y se desplaza a mano.
+ */
+export function Cinta({
+  elementos, velocidad = 40,
+}: {
+  elementos: string[]
+  /** Segundos que tarda en dar una vuelta completa. */
+  velocidad?: number
+}) {
+  const [parada, setParada] = useState(false)
+  const pista = useRef<HTMLDivElement>(null)
+  const arrastre = useRef<{ activo: boolean; x: number; inicio: number }>({ activo: false, x: 0, inicio: 0 })
+
+  const quieta = menosAnimacion()
+
+  return (
+    <div
+      className="group relative overflow-hidden"
+      onMouseEnter={() => setParada(true)}
+      onMouseLeave={() => setParada(false)}
+      onTouchStart={() => setParada(true)}
+      onTouchEnd={() => window.setTimeout(() => setParada(false), 1500)}
+    >
+      <div
+        ref={pista}
+        className={`flex w-max gap-8 ${quieta ? 'overflow-x-auto' : ''}`}
+        style={quieta ? undefined : {
+          animation: `cinta ${velocidad}s linear infinite`,
+          animationPlayState: parada ? 'paused' : 'running',
+        }}
+        onPointerDown={(e) => {
+          arrastre.current = { activo: true, x: e.clientX, inicio: pista.current?.scrollLeft ?? 0 }
+          setParada(true)
+        }}
+        onPointerUp={() => { arrastre.current.activo = false }}
+      >
+        {[...elementos, ...elementos].map((t, i) => (
+          <span key={`${t}-${i}`} className="whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.18em] text-white/40">
+            {t}
+          </span>
+        ))}
+      </div>
+
+      {/* Difuminado en los bordes para que no se corte de golpe */}
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-tinta to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-tinta to-transparent" />
+    </div>
+  )
+}

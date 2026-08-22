@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CaraFogon } from '@/marca/Logo'
-import { Euro, LayoutGrid, Smartphone, X } from 'lucide-react'
+import { Euro, LayoutGrid, Menu, Smartphone, X } from 'lucide-react'
 
 function CaraFogonIcono({ className }: { className?: string }) {
   return <CaraFogon className={className ?? 'size-5'} />
@@ -10,7 +10,7 @@ function CaraFogonIcono({ className }: { className?: string }) {
 const ENLACES = [
   { texto: 'Inicio', ruta: '/', icono: LayoutGrid },
   { texto: 'La aplicación', ruta: '/producto', icono: Smartphone },
-  { texto: 'Fogón', ruta: '/fogon', icono: CaraFogonIcono },
+  { texto: 'Tu asistente', ruta: '/fogon', icono: CaraFogonIcono },
   { texto: 'Precios', ruta: '/precios', icono: Euro },
 ]
 
@@ -32,13 +32,24 @@ export function MenuMovil() {
 
   return (
     <>
-      <button
-        onClick={() => setAbierto(true)}
-        aria-label="Abrir el menú"
-        className="fixed bottom-6 left-1/2 z-40 grid size-16 -translate-x-1/2 place-items-center rounded-full bg-naranja text-white shadow-flotante transition-transform active:scale-95 md:hidden"
-      >
-        <span className="text-2xl leading-none">✦</span>
-      </button>
+      {/* Barra inferior fija: no tapa el texto y siempre está a mano */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-borde bg-lienzo/95 backdrop-blur pb-[env(safe-area-inset-bottom)] md:hidden">
+        <div className="mx-auto flex max-w-md items-center gap-2 px-4 py-2.5">
+          <button
+            onClick={() => setAbierto(true)}
+            aria-label="Abrir el menú"
+            className="flex h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-borde bg-lienzo font-semibold text-tinta active:bg-panel"
+          >
+            <Menu className="size-5" aria-hidden /> Menú
+          </button>
+          <Link
+            to="/entrar?alta=1"
+            className="flex h-11 flex-1 items-center justify-center rounded-lg bg-naranja font-semibold text-white active:bg-naranja-oscuro"
+          >
+            Probar 14 días
+          </Link>
+        </div>
+      </div>
 
       {abierto && (
         <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label="Menú">
@@ -87,7 +98,7 @@ export function MenuMovil() {
           <button
             onClick={() => setAbierto(false)}
             aria-label="Cerrar el menú"
-            className="absolute bottom-6 left-1/2 z-20 grid size-16 -translate-x-1/2 place-items-center rounded-full bg-lienzo text-tinta shadow-flotante"
+            className="absolute bottom-5 left-1/2 z-20 grid size-14 -translate-x-1/2 place-items-center rounded-full bg-lienzo text-tinta shadow-flotante"
           >
             <X className="size-6" aria-hidden />
           </button>

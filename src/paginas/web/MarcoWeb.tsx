@@ -8,7 +8,7 @@ import { ProgresoDeLectura } from '@/paginas/efectos'
 
 export const PAGINAS = [
   { ruta: '/producto', texto: 'La aplicación' },
-  { ruta: '/fogon', texto: 'Fogón' },
+  { ruta: '/fogon', texto: 'Tu asistente' },
   { ruta: '/precios', texto: 'Precios' },
 ]
 

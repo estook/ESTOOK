@@ -60,6 +60,8 @@ const numero = (n: number, d = 1) =>
 export function calcularAvisos(estado: {
   productos: Producto[]
   platos: Plato[]
+  /** Ingredientes por plato. Sin esto no se puede juzgar ningún margen. */
+  ingredientesPorPlato?: Map<string, { plato_id: string; producto_id: string | null; elaboracion_id: string | null; cantidad: number; id: string }[]>
   pedidos: Pedido[]
   puntosAppcc: PuntoAppcc[]
   registrosAppcc: RegistroAppcc[]
@@ -102,7 +104,9 @@ export function calcularAvisos(estado: {
   // ---- Cocina: platos por debajo del objetivo ----
   for (const plato of estado.platos) {
     if (plato.precio_venta == null) continue
-    const cuentas = escandallo([], estado.productos, plato)
+    const ingredientes = estado.ingredientesPorPlato?.get(plato.id) ?? []
+    if (ingredientes.length === 0) continue      // sin escandallo no se opina
+    const cuentas = escandallo(ingredientes, estado.productos, plato)
     if (cuentas.margen == null || cuentas.costeTotal === 0) continue
     if (cuentas.margen < MARGEN_OBJETIVO) {
       avisos.push({

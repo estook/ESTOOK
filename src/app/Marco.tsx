@@ -48,7 +48,8 @@ export function Marco() {
 
   // Sin plan vigente no se entra. El servidor tampoco devuelve datos en ese
   // estado, así que esto es la cara visible de un candado que está en la base.
-  if (accesos.length > 0 && !accesos.some((a) => a.conAcceso)) return <SinPlan />
+  const sinPlan = accesos.length > 0 && accesos.every((a) => !a.conAcceso)
+  if (sinPlan) return <SinPlan />
 
   return (
     <div className="flex min-h-full flex-col bg-panel">
